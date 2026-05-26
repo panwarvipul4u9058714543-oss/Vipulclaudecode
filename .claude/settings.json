@@ -15,7 +15,18 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'cd \"$CLAUDE_PROJECT_DIR\" && if [ -n \"$(git status --porcelain)\" ]; then git add -A && git commit -m \"Auto-save: session end\" && git push -u origin $(git branch --show-current); fi'"
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/auto-save.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/post-edit.sh"
           }
         ]
       }
@@ -28,17 +39,34 @@
       "Bash(node:*)",
       "Bash(python3:*)",
       "Bash(pip:*)",
+      "Bash(pip3:*)",
       "Bash(git:*)",
       "Bash(ls:*)",
       "Bash(cat:*)",
       "Bash(mkdir:*)",
       "Bash(cp:*)",
       "Bash(mv:*)",
+      "Bash(rm:*)",
       "Bash(find:*)",
       "Bash(grep:*)",
       "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Bash(chmod:*)",
+      "Bash(touch:*)",
+      "Bash(echo:*)",
+      "Bash(eslint:*)",
+      "Bash(prettier:*)",
+      "Bash(jq:*)",
+      "Bash(which:*)",
+      "Bash(pwd:*)",
       "WebFetch(*)",
       "WebSearch(*)"
     ]
+  },
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest", "--headless"]
+    }
   }
 }
