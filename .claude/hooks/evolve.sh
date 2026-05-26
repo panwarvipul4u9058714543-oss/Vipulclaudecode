@@ -15,11 +15,17 @@ TODAY=$(date '+%Y-%m-%d')
 [ -f "$ACTIVITY_LOG" ] || exit 0
 
 # ── Count file type edits to detect what is being worked on most ──
-TS_COUNT=$(grep -c '\.tsx\?`' "$ACTIVITY_LOG" 2>/dev/null || echo 0)
-PY_COUNT=$(grep -c '\.py`' "$ACTIVITY_LOG" 2>/dev/null || echo 0)
-CSS_COUNT=$(grep -c '\.css`\|\.scss`\|tailwind' "$ACTIVITY_LOG" 2>/dev/null || echo 0)
-TEST_COUNT=$(grep -c '\.test\.\|\.spec\.' "$ACTIVITY_LOG" 2>/dev/null || echo 0)
-API_COUNT=$(grep -c 'api\|route\|endpoint\|controller' "$ACTIVITY_LOG" 2>/dev/null || echo 0)
+TS_COUNT=$(grep -c '\.tsx\?`' "$ACTIVITY_LOG" 2>/dev/null | tail -1 || echo 0)
+PY_COUNT=$(grep -c '\.py`' "$ACTIVITY_LOG" 2>/dev/null | tail -1 || echo 0)
+CSS_COUNT=$(grep -c '\.css`\|\.scss`\|tailwind' "$ACTIVITY_LOG" 2>/dev/null | tail -1 || echo 0)
+TEST_COUNT=$(grep -c '\.test\.\|\.spec\.' "$ACTIVITY_LOG" 2>/dev/null | tail -1 || echo 0)
+API_COUNT=$(grep -c 'api\|route\|endpoint\|controller' "$ACTIVITY_LOG" 2>/dev/null | tail -1 || echo 0)
+# Ensure values are plain integers
+TS_COUNT=${TS_COUNT##*$'\n'}
+PY_COUNT=${PY_COUNT##*$'\n'}
+CSS_COUNT=${CSS_COUNT##*$'\n'}
+TEST_COUNT=${TEST_COUNT##*$'\n'}
+API_COUNT=${API_COUNT##*$'\n'}
 
 # ── Auto-create commands based on detected patterns ──
 
