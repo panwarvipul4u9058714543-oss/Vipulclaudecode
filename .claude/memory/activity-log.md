@@ -49,3 +49,4 @@ This helps track exactly what changed and when.
 - `2026-05-26 12:57` → edited `.claude/hooks/auto-debug.sh`
 - `2026-05-26 12:57` → edited `.claude/hooks/quality-gate.sh`
 - `2026-05-26 12:57` → edited `.claude/memory/architecture.md`
+- `2026-05-26 12:57` → edited `.claude/memory/errors.md`
