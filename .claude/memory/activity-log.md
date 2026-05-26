@@ -46,3 +46,4 @@ This helps track exactly what changed and when.
 
 ### Session ended: 2026-05-26 12:54
 
+- `2026-05-26 12:57` → edited `.claude/hooks/auto-debug.sh`
