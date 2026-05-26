@@ -38,9 +38,10 @@ if [ -f "$ACTIVITY_LOG" ] && [[ "$FILE" != *"activity-log.md"* ]]; then
   RELATIVE_FILE="${FILE#$PROJECT_DIR/}"
   echo "- \`$TIMESTAMP\` → edited \`$RELATIVE_FILE\`" >> "$ACTIVITY_LOG"
 
-  # Stage and commit the edited file + activity log together so nothing is ever left uncommitted
-  git add "$FILE" "$ACTIVITY_LOG" 2>/dev/null || true
+  # Stage and commit ALL changes (not just this file) so repo is always clean
+  git add -A 2>/dev/null || true
   git diff --cached --quiet || git commit -m "edit: $RELATIVE_FILE — $(date '+%Y-%m-%d %H:%M')" 2>/dev/null || true
+  git push -u origin "$(git branch --show-current)" 2>/dev/null || true
 fi
 
 exit 0
