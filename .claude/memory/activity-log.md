@@ -117,3 +117,4 @@ This helps track exactly what changed and when.
 - `2026-05-26 15:24` → edited `mcp-servers/hermes/src/index.ts`
 - `2026-05-26 15:25` → edited `.claude/settings.json`
 - `2026-05-26 15:25` → edited `.claude/memory/hermes-learnings.md`
+- `2026-05-26 15:25` → edited `CLAUDE.md`

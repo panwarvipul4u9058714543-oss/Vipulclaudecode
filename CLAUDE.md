@@ -11,6 +11,13 @@ At the start of EVERY session, read these files before doing anything:
 7. `.claude/memory/errors.md` — recent command failures to be aware of
 8. `.claude/memory/patterns.md` — usage patterns and auto-created commands
 9. `.claude/memory/mcp-setup-guide.md` — which MCP servers are active and which need API keys
+10. `.claude/memory/hermes-learnings.md` — lessons Hermes Agent extracted from past sessions
+
+## Hermes Agent Behaviour
+- After completing any significant task, call `hermes_learn` to extract and store lessons
+- Before starting a complex task, call `hermes_recall` to check what was learned before
+- Use `hermes_improve` when reviewing code or architecture decisions
+- Run `hermes_analyze_patterns` weekly or when stuck to get strategic insights
 
 At the END of every session, update:
 - `.claude/memory/progress.md` — add what we did today (newest entry at top)
