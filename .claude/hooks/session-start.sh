@@ -84,3 +84,39 @@ if [ -f "docker-compose.yml" ] || [ -f "docker-compose.yaml" ]; then
 fi
 
 echo "Environment setup complete."
+
+# ── Smart daily briefing ─────────────────────────────────
+echo ""
+echo "════════════════════════════════════════"
+echo "   CLAUDE CODE — SESSION BRIEFING"
+echo "   $(date '+%A, %B %d %Y — %H:%M')"
+echo "════════════════════════════════════════"
+
+PROGRESS="$PROJECT_DIR/.claude/memory/progress.md"
+MISTAKES="$PROJECT_DIR/.claude/memory/mistakes.md"
+ERRORS="$PROJECT_DIR/.claude/memory/errors.md"
+PATTERNS="$PROJECT_DIR/.claude/memory/patterns.md"
+
+# Show last session summary
+if [ -f "$PROGRESS" ]; then
+  echo ""
+  echo "LAST SESSION:"
+  grep -A5 "^## $(date '+%Y-%m-%d')" "$PROGRESS" 2>/dev/null | head -6 || \
+  grep -A5 "^## " "$PROGRESS" 2>/dev/null | head -6 || \
+  echo "  No previous session found."
+fi
+
+# Show any recent errors to be aware of
+if [ -f "$ERRORS" ] && grep -q "Exit code" "$ERRORS" 2>/dev/null; then
+  echo ""
+  echo "RECENT ERRORS TO WATCH:"
+  grep "Command:" "$ERRORS" 2>/dev/null | tail -3 | sed 's/^/  /'
+fi
+
+# Show auto-created commands from evolution engine
+NEW_COMMANDS=$(ls "$PROJECT_DIR/.claude/commands/" 2>/dev/null | wc -l)
+echo ""
+echo "AVAILABLE COMMANDS: $NEW_COMMANDS custom slash commands ready"
+echo "  Type /memory for full briefing, /evolve to self-improve"
+echo "════════════════════════════════════════"
+echo ""
