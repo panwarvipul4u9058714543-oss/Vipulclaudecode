@@ -70,3 +70,4 @@ This helps track exactly what changed and when.
 
 - `2026-05-26 13:07` → edited `.claude/hooks/evolve.sh`
 - `2026-05-26 13:07` → edited `.claude/hooks/auto-save.sh`
+- `2026-05-26 13:08` → edited `.claude/hooks/session-start.sh`
