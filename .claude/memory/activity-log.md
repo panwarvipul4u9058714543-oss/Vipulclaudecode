@@ -55,3 +55,4 @@ This helps track exactly what changed and when.
 - `2026-05-26 12:58` → edited `.claude/commands/plan.md`
 - `2026-05-26 12:58` → edited `.claude/commands/fullbuild.md`
 - `2026-05-26 12:58` → edited `.claude/commands/status.md`
+- `2026-05-26 12:58` → edited `.claude/settings.json`
