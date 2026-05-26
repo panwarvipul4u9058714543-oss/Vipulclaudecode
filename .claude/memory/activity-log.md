@@ -113,3 +113,4 @@ This helps track exactly what changed and when.
 ### Session ended: 2026-05-26 15:11
 
 - `2026-05-26 15:23` → edited `mcp-servers/hermes/package.json`
+- `2026-05-26 15:24` → edited `mcp-servers/hermes/tsconfig.json`
