@@ -84,3 +84,4 @@ This helps track exactly what changed and when.
 ### Session ended: 2026-05-26 13:13
 
 - `2026-05-26 13:17` → edited `.claude/settings.json`
+- `2026-05-26 13:17` → edited `.claude/memory/mcp-setup-guide.md`
