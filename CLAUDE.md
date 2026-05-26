@@ -108,19 +108,34 @@ When any command fails, I MUST:
 - Memory MCP available for persistent notes across sessions
 
 ## Custom Commands Available
+### Build & Create
+- `/build` — build features step by step with explanations
+- `/fullbuild` — complete build: research → plan → code → test → commit
+- `/plan` — create a step-by-step implementation plan (no code yet)
+- `/research` — web research + best practices before building
+- `/component` — build a React/TypeScript component (auto-created when React usage detected)
+- `/api` — design and build API endpoints
+- `/database` — database design and queries
+
+### Learn & Understand
 - `/explain` — explain any code in beginner words
-- `/fix` — fix bugs with explanation
-- `/build` — build features step by step
-- `/learn` — learn any coding topic
-- `/review` — full code review
-- `/test` — write and run tests
+- `/learn` — teach any coding topic from scratch
 - `/debug` — debug errors with explanation
-- `/deploy` — deployment walkthrough
+- `/fix` — fix bugs with explanation
+
+### Quality & Safety
+- `/review` — full senior developer code review
+- `/test` — write and run tests
 - `/security` — security audit
 - `/optimize` — performance optimization
-- `/docs` — generate documentation
-- `/refactor` — improve code quality
-- `/database` — database help
-- `/api` — API design and building
-- `/git` — git workflow help
+- `/refactor` — clean up messy code
+- `/status` — full project health dashboard
+
+### Deploy & Ops
+- `/deploy` — deployment walkthrough
 - `/docker` — Docker containerization help
+- `/git` — git workflow help
+
+### Memory & Intelligence
+- `/memory` — recall everything Claude knows about this project
+- `/evolve` — trigger full self-improvement analysis and write new commands
