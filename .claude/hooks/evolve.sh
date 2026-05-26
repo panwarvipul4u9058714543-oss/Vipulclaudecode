@@ -89,8 +89,9 @@ EOF
   echo "AUTO-CREATED: /endpoint command (detected heavy API/route work)"
 fi
 
-# ── Log patterns detected ──
-cat >> "$PATTERNS_FILE" << EOF
+# ── Log patterns detected — only if today's entry doesn't already exist ──
+if ! grep -q "^## $TODAY" "$PATTERNS_FILE" 2>/dev/null; then
+  cat >> "$PATTERNS_FILE" << EOF
 
 ## $TODAY
 - TypeScript/React edits: $TS_COUNT
@@ -99,6 +100,7 @@ cat >> "$PATTERNS_FILE" << EOF
 - Test file edits: $TEST_COUNT
 - API/Route edits: $API_COUNT
 EOF
+fi
 
 # ── Commit all changes made by this hook immediately ──
 if ! git diff --quiet 2>/dev/null || [ -n "$(git ls-files --others --exclude-standard 2>/dev/null)" ]; then
