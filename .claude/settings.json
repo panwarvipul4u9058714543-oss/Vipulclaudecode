@@ -122,6 +122,14 @@
     ]
   },
   "mcpServers": {
+    "hermes": {
+      "command": "node",
+      "args": ["/home/user/Vipulclaudecode/mcp-servers/hermes/dist/index.js"],
+      "env": {
+        "TOGETHER_API_KEY": "${TOGETHER_API_KEY}",
+        "MEMORY_DIR": "/home/user/Vipulclaudecode/.claude/memory"
+      }
+    },
     "playwright": {
       "command": "npx",
       "args": ["@playwright/mcp@latest", "--headless"]

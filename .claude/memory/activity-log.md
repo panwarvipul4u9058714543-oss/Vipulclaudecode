@@ -115,3 +115,4 @@ This helps track exactly what changed and when.
 - `2026-05-26 15:23` → edited `mcp-servers/hermes/package.json`
 - `2026-05-26 15:24` → edited `mcp-servers/hermes/tsconfig.json`
 - `2026-05-26 15:24` → edited `mcp-servers/hermes/src/index.ts`
+- `2026-05-26 15:25` → edited `.claude/settings.json`
