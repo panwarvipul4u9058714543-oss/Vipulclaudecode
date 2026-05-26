@@ -1,23 +1,30 @@
 # Vipul's Projects
 
 ## What I Am Building Right Now
-<!-- I will update this every session based on what we work on -->
-- Setting up Claude Code on the web to be as powerful as desktop
 
-## Past Projects
-<!-- List of things we have built together -->
-- Claude Code full power setup (hooks, commands, MCP servers)
+### 1. AI Education Product (Vision Stage)
+- Goal: AI-native education system for curiosity-driven learners
+- Core insight: Different learners = different cognitive markets (not one-size-fits-all)
+- Key segments: exam-focused, curiosity-driven, skill-improvement, professional, JEE/NEET
+- Architecture ideas: multi-modal pedagogy, concept graphs, adaptive sequencing, RAG vs fine-tuning
+- Teaching philosophy: intuition → history → formalism → generalization (NOT definition first)
+- Status: Deep thinking/research phase, no code yet
 
-## Goals
-<!-- What Vipul wants to achieve -->
-- Learn coding from scratch while building real projects
-- Understand every line of code, not just copy-paste
-- Build full-stack web apps (React frontend + Node/Python backend)
-- Deploy projects to the internet
+### 2. Claude Code Power Setup (This repo — Done)
+- Made Claude Code on web as powerful as desktop
+- 22 custom commands, 8 hooks, memory system, self-evolution engine, 11 MCP servers
+- Everything auto-saves to GitHub permanently
 
-## Current Tech Stack in Use
-- React / Next.js (frontend)
-- Node.js / Python (backend)
-- PostgreSQL / Supabase (database)
-- Vercel / AWS (deployment)
-- TypeScript
+### 3. Learning to Code
+- Stack: React, Next.js, TypeScript, Node.js, Python
+- Goal: Build the education product above eventually
+- Approach: Learn by building real things with explanations
+
+## Big Picture Goal
+Understand intelligence, learning, and reality deeply enough to build systems
+that meaningfully improve human thinking.
+
+## Past Interests (Still Relevant)
+- Physics: quantum mechanics, relativity, antimatter, space travel
+- Consciousness: Vedanta, neuroscience, mind-body problem, reincarnation research
+- MBBS/Psychiatry (historical interest, not current path)
