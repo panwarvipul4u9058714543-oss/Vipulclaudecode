@@ -11,51 +11,112 @@ cd "$PROJECT_DIR"
 
 echo "Setting up project environment..."
 
-# Node.js / npm
+# ── Node.js ──────────────────────────────────────────────
 if [ -f "package.json" ]; then
-  echo "Found package.json — installing Node dependencies..."
+  echo "Installing Node.js dependencies..."
   npm install
 fi
 
-# Python - pip
+if [ -f "yarn.lock" ]; then
+  yarn install --frozen-lockfile 2>/dev/null || true
+fi
+
+if [ -f "pnpm-lock.yaml" ]; then
+  pnpm install --frozen-lockfile 2>/dev/null || true
+fi
+
+# ── Python ───────────────────────────────────────────────
 if [ -f "requirements.txt" ]; then
-  echo "Found requirements.txt — installing Python dependencies..."
+  echo "Installing Python dependencies..."
   pip install -r requirements.txt --quiet
 fi
 
-# Python - pyproject.toml / poetry
+if [ -f "requirements-dev.txt" ]; then
+  pip install -r requirements-dev.txt --quiet
+fi
+
 if [ -f "pyproject.toml" ]; then
   if command -v poetry &>/dev/null; then
-    echo "Found pyproject.toml — installing via Poetry..."
     poetry install --no-interaction
   else
     pip install -e . --quiet 2>/dev/null || true
   fi
 fi
 
-# Python - pipenv
-if [ -f "Pipfile" ]; then
-  echo "Found Pipfile — installing via pipenv..."
-  pip install pipenv --quiet
-  pipenv install --dev --system 2>/dev/null || true
-fi
-
-# Ruby
+# ── Ruby ─────────────────────────────────────────────────
 if [ -f "Gemfile" ]; then
-  echo "Found Gemfile — installing Ruby gems..."
+  echo "Installing Ruby gems..."
   bundle install --quiet
 fi
 
-# Go
+# ── Go ───────────────────────────────────────────────────
 if [ -f "go.mod" ]; then
-  echo "Found go.mod — downloading Go modules..."
+  echo "Downloading Go modules..."
   go mod download
 fi
 
-# Rust
+# ── Rust ─────────────────────────────────────────────────
 if [ -f "Cargo.toml" ]; then
-  echo "Found Cargo.toml — fetching Rust dependencies..."
+  echo "Fetching Rust dependencies..."
   cargo fetch
 fi
 
+# ── Git config ───────────────────────────────────────────
+git config --global core.autocrlf input
+git config --global pull.rebase false
+git config --global init.defaultBranch main
+
+# ── TypeScript check ─────────────────────────────────────
+if [ -f "tsconfig.json" ]; then
+  echo "TypeScript project detected."
+  export TS_NODE_TRANSPILE_ONLY=true
+fi
+
+# ── Environment variables ────────────────────────────────
+if [ -f ".env.example" ] && [ ! -f ".env" ]; then
+  echo "Creating .env from .env.example..."
+  cp .env.example .env
+fi
+
+# ── Docker ───────────────────────────────────────────────
+if [ -f "docker-compose.yml" ] || [ -f "docker-compose.yaml" ]; then
+  echo "Docker Compose project detected."
+fi
+
 echo "Environment setup complete."
+
+# ── Smart daily briefing ─────────────────────────────────
+echo ""
+echo "════════════════════════════════════════"
+echo "   CLAUDE CODE — SESSION BRIEFING"
+echo "   $(date '+%A, %B %d %Y — %H:%M')"
+echo "════════════════════════════════════════"
+
+PROGRESS="$PROJECT_DIR/.claude/memory/progress.md"
+MISTAKES="$PROJECT_DIR/.claude/memory/mistakes.md"
+ERRORS="$PROJECT_DIR/.claude/memory/errors.md"
+PATTERNS="$PROJECT_DIR/.claude/memory/patterns.md"
+
+# Show last session summary
+if [ -f "$PROGRESS" ]; then
+  echo ""
+  echo "LAST SESSION:"
+  grep -A5 "^## $(date '+%Y-%m-%d')" "$PROGRESS" 2>/dev/null | head -6 || \
+  grep -A5 "^## " "$PROGRESS" 2>/dev/null | head -6 || \
+  echo "  No previous session found."
+fi
+
+# Show any recent errors to be aware of
+if [ -f "$ERRORS" ] && grep -q "Exit code" "$ERRORS" 2>/dev/null; then
+  echo ""
+  echo "RECENT ERRORS TO WATCH:"
+  grep "Command:" "$ERRORS" 2>/dev/null | tail -3 | sed 's/^/  /'
+fi
+
+# Show auto-created commands from evolution engine
+NEW_COMMANDS=$(ls "$PROJECT_DIR/.claude/commands/" 2>/dev/null | wc -l)
+echo ""
+echo "AVAILABLE COMMANDS: $NEW_COMMANDS custom slash commands ready"
+echo "  Type /memory for full briefing, /evolve to self-improve"
+echo "════════════════════════════════════════"
+echo ""
