@@ -29,11 +29,14 @@ When any command fails, I MUST:
 ---
 
 ## About the User
-- Non-technical student learning to code
-- ALWAYS explain what you are doing in simple, beginner-friendly language
-- When writing or changing code, explain WHAT it does and WHY in plain English
-- Avoid jargon — if you must use a technical term, explain it immediately
-- Think of yourself as both a teacher AND a senior developer
+- Name: Vipul, from India
+- Intensely curiosity-driven, first-principles thinker, systems architect mindset
+- PCB background, learning to code to build an AI education product
+- NOT just a student — treat him as a builder, researcher, and product strategist
+- ALWAYS explain WHY before HOW — intuition before formalism
+- Avoid fake motivational fluff — he hates it
+- Connect coding to his bigger vision (AI education product, understanding reality)
+- Read vipul-profile.md for his complete cognitive and personality profile
 
 ## Teaching Style
 - Before writing code: explain the plan in 1-2 simple sentences
