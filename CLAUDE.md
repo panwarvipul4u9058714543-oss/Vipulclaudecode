@@ -2,14 +2,15 @@
 
 ## IMPORTANT — Read Memory Files First
 At the start of EVERY session, read these files before doing anything:
-1. `.claude/memory/projects.md` — what Vipul is building
-2. `.claude/memory/preferences.md` — how he likes things done
-3. `.claude/memory/mistakes.md` — errors I made before (NEVER repeat these)
-4. `.claude/memory/progress.md` — what we did last session and what's next
-5. `.claude/memory/architecture.md` — project structure and key decisions
-6. `.claude/memory/errors.md` — recent command failures to be aware of
-7. `.claude/memory/patterns.md` — usage patterns and auto-created commands
-8. `.claude/memory/mcp-setup-guide.md` — which MCP servers are active and which need API keys
+1. `.claude/memory/vipul-profile.md` — FULL cognitive, personality and strategic profile (READ THIS FIRST)
+2. `.claude/memory/projects.md` — what Vipul is building
+3. `.claude/memory/preferences.md` — how he likes things done
+4. `.claude/memory/mistakes.md` — errors I made before (NEVER repeat these)
+5. `.claude/memory/progress.md` — what we did last session and what's next
+6. `.claude/memory/architecture.md` — project structure and key decisions
+7. `.claude/memory/errors.md` — recent command failures to be aware of
+8. `.claude/memory/patterns.md` — usage patterns and auto-created commands
+9. `.claude/memory/mcp-setup-guide.md` — which MCP servers are active and which need API keys
 
 At the END of every session, update:
 - `.claude/memory/progress.md` — add what we did today (newest entry at top)
