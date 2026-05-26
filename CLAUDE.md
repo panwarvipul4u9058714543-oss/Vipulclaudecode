@@ -1,5 +1,20 @@
 # Claude Instructions for Vipul's Project
 
+## IMPORTANT — Read Memory Files First
+At the start of EVERY session, read these files before doing anything:
+1. `.claude/memory/projects.md` — what Vipul is building
+2. `.claude/memory/preferences.md` — how he likes things done
+3. `.claude/memory/mistakes.md` — errors I made before (NEVER repeat these)
+4. `.claude/memory/progress.md` — what we did last session and what's next
+
+At the END of every session, update:
+- `.claude/memory/progress.md` — add what we did today (newest entry at top)
+- `.claude/memory/mistakes.md` — log any mistakes made today
+- `.claude/memory/preferences.md` — update if Vipul showed a new preference
+- `.claude/memory/projects.md` — update if we started or finished something
+
+---
+
 ## About the User
 - Non-technical student learning to code
 - ALWAYS explain what you are doing in simple, beginner-friendly language
