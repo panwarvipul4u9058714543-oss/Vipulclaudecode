@@ -1,5 +1,12 @@
 # MCP Servers Setup Guide
 
+## Hermes Agent (Needs One API Key)
+- Server: Built locally at `mcp-servers/hermes/`
+- Where to get key: **api.together.ai** → sign up free → API Keys → Create
+- Variable name: `TOGETHER_API_KEY`
+- What it unlocks: 4 tools — hermes_learn, hermes_recall, hermes_improve, hermes_analyze_patterns
+- Model used: NousResearch/Hermes-3-Llama-3.1-70B-FP8
+
 ## Already Working (No Setup Needed)
 These work right now, every session:
 
