@@ -17,7 +17,9 @@ if [ -n "$(git status --porcelain)" ]; then
   echo "Auto-saving your work to GitHub..."
   git add -A
   git commit -m "Auto-save: $(date '+%Y-%m-%d %H:%M') — session end"
-  git push -u origin "$(git branch --show-current)"
+  for i in 1 2 3 4; do
+    git push -u origin "$(git branch --show-current)" && break || sleep $((i * 2))
+  done
   echo "Work saved successfully!"
 else
   echo "Nothing new to save."
