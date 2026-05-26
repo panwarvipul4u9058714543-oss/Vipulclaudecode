@@ -34,3 +34,4 @@ This helps track exactly what changed and when.
 
 - `2026-05-26 12:51` → edited `.claude/hooks/evolve.sh`
 - `2026-05-26 12:51` → edited `.claude/memory/patterns.md`
+- `2026-05-26 12:51` → edited `.claude/commands/evolve.md`
