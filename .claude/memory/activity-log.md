@@ -85,3 +85,4 @@ This helps track exactly what changed and when.
 
 - `2026-05-26 13:17` → edited `.claude/settings.json`
 - `2026-05-26 13:17` → edited `.claude/memory/mcp-setup-guide.md`
+- `2026-05-26 13:17` → edited `CLAUDE.md`
