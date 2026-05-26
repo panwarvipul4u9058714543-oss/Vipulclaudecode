@@ -100,5 +100,14 @@ cat >> "$PATTERNS_FILE" << EOF
 - API/Route edits: $API_COUNT
 EOF
 
+# ── Commit all changes made by this hook immediately ──
+if ! git diff --quiet 2>/dev/null || [ -n "$(git ls-files --others --exclude-standard 2>/dev/null)" ]; then
+  git add -A 2>/dev/null || true
+  git commit -m "evolve: session pattern update — $TODAY" 2>/dev/null || true
+  for i in 1 2 3 4; do
+    git push -u origin "$(git branch --show-current)" 2>/dev/null && break || sleep $((i * 2))
+  done
+fi
+
 echo "Evolution check complete."
 exit 0

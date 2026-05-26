@@ -41,3 +41,4 @@ This helps track exactly what changed and when.
 
 ### Session ended: 2026-05-26 12:52
 
+- `2026-05-26 12:54` → edited `.claude/hooks/evolve.sh`
