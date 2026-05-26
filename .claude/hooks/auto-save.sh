@@ -4,11 +4,12 @@ set -euo pipefail
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 cd "$PROJECT_DIR"
 
-# Update the activity log with session end timestamp
+# Update the activity log with session end timestamp — only once per minute
 ACTIVITY_LOG="$PROJECT_DIR/.claude/memory/activity-log.md"
-if [ -f "$ACTIVITY_LOG" ]; then
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M')
+if [ -f "$ACTIVITY_LOG" ] && ! grep -q "Session ended: $TIMESTAMP" "$ACTIVITY_LOG" 2>/dev/null; then
   echo "" >> "$ACTIVITY_LOG"
-  echo "### Session ended: $(date '+%Y-%m-%d %H:%M')" >> "$ACTIVITY_LOG"
+  echo "### Session ended: $TIMESTAMP" >> "$ACTIVITY_LOG"
   echo "" >> "$ACTIVITY_LOG"
 fi
 
