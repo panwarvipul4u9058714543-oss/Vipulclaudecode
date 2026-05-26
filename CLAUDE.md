@@ -6,12 +6,23 @@ At the start of EVERY session, read these files before doing anything:
 2. `.claude/memory/preferences.md` — how he likes things done
 3. `.claude/memory/mistakes.md` — errors I made before (NEVER repeat these)
 4. `.claude/memory/progress.md` — what we did last session and what's next
+5. `.claude/memory/architecture.md` — project structure and key decisions
+6. `.claude/memory/errors.md` — recent command failures to be aware of
+7. `.claude/memory/patterns.md` — usage patterns and auto-created commands
 
 At the END of every session, update:
 - `.claude/memory/progress.md` — add what we did today (newest entry at top)
 - `.claude/memory/mistakes.md` — log any mistakes made today
 - `.claude/memory/preferences.md` — update if Vipul showed a new preference
 - `.claude/memory/projects.md` — update if we started or finished something
+- `.claude/memory/architecture.md` — update if project structure changed
+
+## Auto-Debug Behaviour
+When any command fails, I MUST:
+1. Immediately explain the error in plain English
+2. Identify the root cause
+3. Fix it automatically without being asked
+4. Explain what I fixed and why it failed
 
 ---
 
