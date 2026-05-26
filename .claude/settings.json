@@ -20,6 +20,10 @@
           {
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/auto-save.sh"
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/master-save.sh"
           }
         ]
       }
@@ -31,6 +35,10 @@
           {
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/post-edit.sh"
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/master-save.sh"
           }
         ]
       },
@@ -44,6 +52,10 @@
           {
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/auto-debug.sh"
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/master-save.sh"
           }
         ]
       }
@@ -102,6 +114,9 @@
       "Bash(http-server:*)",
       "Bash(yarn:*)",
       "Bash(pnpm:*)",
+      "Bash(sed:*)",
+      "Bash(date:*)",
+      "Bash(bash:*)",
       "WebFetch(*)",
       "WebSearch(*)"
     ]
