@@ -13,3 +13,4 @@ This helps track exactly what changed and when.
 
 ### Session ended: 2026-05-26 12:39
 
+- `2026-05-26 12:40` → edited `.claude/hooks/post-edit.sh`

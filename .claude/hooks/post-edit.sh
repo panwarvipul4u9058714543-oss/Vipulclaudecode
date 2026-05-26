@@ -31,12 +31,16 @@ if [[ "$EXT" == "js" || "$EXT" == "jsx" || "$EXT" == "ts" || "$EXT" == "tsx" || 
   fi
 fi
 
-# Log activity (skip logging to activity-log.md itself to avoid infinite loop)
+# Log activity and immediately commit so repo stays clean at all times
 ACTIVITY_LOG="$PROJECT_DIR/.claude/memory/activity-log.md"
 if [ -f "$ACTIVITY_LOG" ] && [[ "$FILE" != *"activity-log.md"* ]]; then
   TIMESTAMP=$(date '+%Y-%m-%d %H:%M')
   RELATIVE_FILE="${FILE#$PROJECT_DIR/}"
   echo "- \`$TIMESTAMP\` → edited \`$RELATIVE_FILE\`" >> "$ACTIVITY_LOG"
+
+  # Stage and commit the edited file + activity log together so nothing is ever left uncommitted
+  git add "$FILE" "$ACTIVITY_LOG" 2>/dev/null || true
+  git diff --cached --quiet || git commit -m "edit: $RELATIVE_FILE — $(date '+%Y-%m-%d %H:%M')" 2>/dev/null || true
 fi
 
 exit 0
