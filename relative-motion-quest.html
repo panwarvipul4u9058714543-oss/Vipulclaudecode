@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚡ Relative Motion Quest</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Segoe UI',system-ui,sans-serif;
+  background:linear-gradient(135deg,#0a0a1a 0%,#0d1b3e 60%,#0a0a1a 100%);
+  min-height:100vh;color:#fff;overflow-x:hidden;
+}
+
+/* ── STARS BACKGROUND ── */
+body::before{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background-image:radial-gradient(1px 1px at 20% 30%,rgba(255,255,255,0.4),transparent),
+    radial-gradient(1px 1px at 80% 10%,rgba(255,255,255,0.3),transparent),
+    radial-gradient(1px 1px at 50% 70%,rgba(255,255,255,0.2),transparent),
+    radial-gradient(1px 1px at 10% 80%,rgba(255,255,255,0.3),transparent),
+    radial-gradient(1px 1px at 90% 50%,rgba(255,255,255,0.2),transparent);
+  pointer-events:none;z-index:0;
+}
+
+/* ── HEADER ── */
+.hdr{
+  position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 24px;
+  background:rgba(10,10,30,0.85);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(255,255,255,0.07);
+}
+.lives{display:flex;gap:6px;font-size:24px}
+.hrt{transition:all .4s;filter:drop-shadow(0 0 6px rgba(255,80,80,.6))}
+.hrt.dead{filter:grayscale(1);opacity:.3;transform:scale(.8)}
+.prog-wrap{flex:1;margin:0 20px}
+.prog-lbl{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;text-align:center;margin-bottom:5px}
+.prog-bar{background:rgba(255,255,255,.1);border-radius:50px;height:12px;overflow:hidden;border:1px solid rgba(255,255,255,.12)}
+.prog-fill{background:linear-gradient(90deg,#00e5ff,#00bcd4);height:100%;border-radius:50px;transition:width .6s cubic-bezier(.4,0,.2,1);box-shadow:0 0 12px rgba(0,229,255,.5)}
+.xp-pill{background:linear-gradient(135deg,#ff6b35,#f7c948);padding:7px 16px;border-radius:50px;font-weight:800;font-size:14px;box-shadow:0 4px 16px rgba(247,201,72,.4);white-space:nowrap;color:#1a1a1a}
+.zone-badge{
+  position:fixed;top:70px;left:50%;transform:translateX(-50%);
+  padding:5px 18px;border-radius:50px;font-size:11px;font-weight:800;
+  letter-spacing:1.5px;text-transform:uppercase;z-index:99;
+  transition:all .4s ease;pointer-events:none;
+}
+
+/* ── LAYOUT ── */
+.wrap{max-width:780px;margin:28px auto;padding:0 16px 80px;position:relative;z-index:1}
+.q-num{font-size:11px;color:rgba(255,255,255,.35);text-align:center;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
+
+/* ── CARD ── */
+.card{
+  background:rgba(255,255,255,.04);
+  border-radius:26px;
+  border:1.5px solid rgba(255,255,255,.09);
+  backdrop-filter:blur(18px);
+  overflow:hidden;
+  animation:slideUp .42s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 24px 60px rgba(0,0,0,.5);
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── BEAR PANEL ── */
+.bear-panel{
+  display:flex;align-items:flex-end;gap:18px;
+  padding:22px 28px 0;
+}
+.bear-wrap{flex-shrink:0;position:relative}
+.speech{
+  background:rgba(255,255,255,.08);
+  border:1.5px solid rgba(255,255,255,.15);
+  border-radius:16px 16px 16px 4px;
+  padding:12px 18px;
+  font-size:15px;font-weight:700;line-height:1.5;
+  flex:1;position:relative;
+  min-height:60px;display:flex;align-items:center;
+}
+.speech::before{
+  content:'';position:absolute;left:-12px;bottom:14px;
+  border:6px solid transparent;
+  border-right-color:rgba(255,255,255,.15);
+}
+
+/* ── SCENE (3D viz) ── */
+.scene{
+  background:rgba(0,0,0,.4);
+  margin:0;padding:20px;
+  border-top:1px solid rgba(255,255,255,.06);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  min-height:180px;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;position:relative;
+}
+.scene svg{display:block;max-width:100%}
+
+/* ── QUESTION TEXT ── */
+.q-text{padding:18px 28px 0;font-size:19px;font-weight:700;line-height:1.4;text-align:center}
+.q-sub{padding:6px 28px 0;font-size:13px;color:rgba(255,255,255,.5);text-align:center}
+
+/* ── OPTIONS ── */
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:18px 28px 24px}
+.opts.single{grid-template-columns:1fr}
+.opt{
+  background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.16);
+  border-radius:16px;padding:18px 16px;color:#fff;
+  font-size:16px;font-weight:700;cursor:pointer;
+  transition:all .2s ease;display:flex;align-items:center;justify-content:center;gap:10px;
+  text-align:center;line-height:1.3;
+}
+.opt:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.35);transform:translateY(-2px)}
+.opt.ok{background:rgba(0,230,118,.2);border-color:#00e676;animation:pop .4s ease}
+.opt.bad{background:rgba(255,82,82,.2);border-color:#ff5252;animation:shk .4s ease}
+
+/* ── TF ── */
+.tf-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:18px 28px 24px}
+.tf{
+  padding:26px;border-radius:18px;border:2.5px solid rgba(255,255,255,.18);
+  cursor:pointer;font-size:20px;font-weight:900;transition:all .22s ease;
+  background:rgba(255,255,255,.05);color:#fff;
+}
+.tf.t-btn{border-color:rgba(0,230,118,.45)}
+.tf.f-btn{border-color:rgba(255,82,82,.45)}
+.tf:hover{transform:translateY(-4px);background:rgba(255,255,255,.12)}
+
+/* ── FILL ── */
+.fill-row{display:flex;align-items:center;justify-content:center;gap:12px;padding:20px 28px 26px;flex-wrap:wrap}
+.fill-lbl{font-size:17px;font-weight:600}
+.fill-in{
+  background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.28);
+  border-radius:12px;padding:12px 16px;color:#fff;
+  font-size:20px;font-weight:800;width:130px;text-align:center;outline:none;
+  transition:border-color .2s;
+}
+.fill-in:focus{border-color:#00e5ff}
+.go-btn{
+  background:linear-gradient(135deg,#667eea,#764ba2);border:none;
+  border-radius:12px;padding:12px 26px;color:#fff;
+  font-size:15px;font-weight:800;cursor:pointer;transition:all .2s ease;
+}
+.go-btn:hover{transform:translateY(-2px)}
+
+/* ── FEEDBACK ── */
+.fb{border-radius:16px;padding:16px 22px;margin:0 28px 18px;display:none;animation:fadeUp .3s ease}
+.fb.ok{background:rgba(0,230,118,.14);border:2px solid rgba(0,230,118,.6)}
+.fb.bad{background:rgba(255,82,82,.14);border:2px solid rgba(255,82,82,.6)}
+.fb-title{font-size:16px;font-weight:800;margin-bottom:6px}
+.fb-body{font-size:13px;color:rgba(255,255,255,.82);line-height:1.7}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+
+/* ── NEXT BTN ── */
+.nxt{
+  width:calc(100% - 56px);margin:0 28px 28px;padding:16px;
+  background:linear-gradient(135deg,#00e5ff,#0097a7);
+  border:none;border-radius:16px;color:#0a0a1a;
+  font-size:17px;font-weight:900;cursor:pointer;display:none;
+  transition:all .22s ease;box-shadow:0 6px 22px rgba(0,229,255,.3);
+}
+.nxt:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,229,255,.45)}
+
+/* ── CONFETTI ── */
+.cw{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999}
+.cp{position:absolute;top:-14px;border-radius:3px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+/* ── ZONE TRANSITIONS ── */
+.zone-card{
+  background:rgba(0,0,0,.6);border-radius:24px;
+  border:2px solid currentColor;
+  padding:36px;text-align:center;margin:20px 0;
+  animation:slideUp .5s ease;
+}
+.zone-title{font-size:28px;font-weight:900;margin-bottom:10px}
+.zone-desc{font-size:14px;color:rgba(255,255,255,.6);margin-bottom:24px}
+.zone-go{
+  background:currentColor;border:none;border-radius:12px;
+  padding:14px 36px;font-size:16px;font-weight:900;cursor:pointer;
+  color:#0a0a1a;transition:all .2s ease;
+}
+.zone-go:hover{transform:scale(1.05)}
+
+/* ── COMPLETION ── */
+#fin{display:none;text-align:center;padding:50px 20px;animation:slideUp .5s ease}
+#fin.on{display:block}
+.trophy{font-size:90px;animation:bob 1.2s ease-in-out infinite alternate;display:block;margin-bottom:14px}
+@keyframes bob{from{transform:translateY(0)}to{transform:translateY(-20px)}}
+.fin-title{font-size:40px;font-weight:900;background:linear-gradient(135deg,#f7c948,#ff6b35);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:26px 0}
+.stat{background:rgba(255,255,255,.07);border-radius:18px;padding:20px;border:1.5px solid rgba(255,255,255,.1)}
+.sv{font-size:34px;font-weight:900;margin-bottom:4px}
+.sl{font-size:10px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:1.2px}
+.recap{background:rgba(255,255,255,.05);border-radius:18px;padding:22px 26px;text-align:left;margin-top:20px;border:1px solid rgba(255,255,255,.08)}
+.recap-title{font-size:16px;font-weight:800;color:#f7c948;margin-bottom:14px}
+.recap-row{font-size:13px;color:rgba(255,255,255,.8);padding:5px 0;line-height:1.6}
+.replay{width:100%;margin-top:22px;padding:17px;background:linear-gradient(135deg,#f7c948,#ff6b35);border:none;border-radius:16px;color:#0a0a1a;font-size:17px;font-weight:900;cursor:pointer;box-shadow:0 6px 22px rgba(247,201,72,.35);transition:all .2s ease}
+.replay:hover{transform:translateY(-3px)}
+
+/* JEE styling */
+.jee-badge{display:inline-block;background:linear-gradient(135deg,#ff6b35,#f7c948);color:#0a0a1a;padding:4px 14px;border-radius:50px;font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.formula-box{background:rgba(0,0,0,.5);border:1.5px solid rgba(0,229,255,.3);border-radius:12px;padding:12px 18px;margin:10px 28px;font-family:'Courier New',monospace;font-size:14px;color:#00e5ff;text-align:center}
+
+@media(max-width:500px){
+  .opts,.tf-row,.stats{grid-template-columns:1fr}
+  .bear-panel{flex-direction:column;align-items:center}
+  .speech::before{display:none}
+  .q-text{font-size:17px}
+  .hdr{padding:12px 14px}
+}
+
+/* ── ANIMATED OBJECTS ── */
+.train-r{animation:trainR 3s linear infinite}
+.train-l{animation:trainL 3s linear infinite}
+.car-move{animation:carMove 2.5s ease-in-out infinite alternate}
+.rain-drop{animation:rainFall 1.2s linear infinite}
+.boat-bob{animation:boatBob 2s ease-in-out infinite alternate}
+.arrow-pulse{animation:arrowPulse 1.5s ease-in-out infinite}
+@keyframes trainR{from{transform:translateX(-60px)}to{transform:translateX(60px)}}
+@keyframes trainL{from{transform:translateX(60px)}to{transform:translateX(-60px)}}
+@keyframes carMove{from{transform:translateX(0)}to{transform:translateX(20px)}}
+@keyframes rainFall{from{transform:translateY(-20px);opacity:0}to{transform:translateY(40px);opacity:1}}
+@keyframes boatBob{from{transform:translateY(-3px) rotate(-2deg)}to{transform:translateY(3px) rotate(2deg)}}
+@keyframes arrowPulse{0%,100%{opacity:.6}50%{opacity:1;transform:scale(1.1)}}
+</style>
+</head>
+<body>
+
+<div class="cw" id="cw"></div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="lives">
+    <span class="hrt" id="h1">❤️</span>
+    <span class="hrt" id="h2">❤️</span>
+    <span class="hrt" id="h3">❤️</span>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-lbl">Relative Motion Quest</div>
+    <div class="prog-bar"><div class="prog-fill" id="pf" style="width:0%"></div></div>
+  </div>
+  <div class="xp-pill">⚡ <span id="xpc">0</span></div>
+</div>
+
+<div class="zone-badge" id="zb"></div>
+
+<div class="wrap">
+  <div class="q-num" id="qn"></div>
+  <div id="qc"></div>
+  <div id="fin">
+    <span class="trophy">🏆</span>
+    <div class="fin-title">PHYSICS MASTER!</div>
+    <p style="color:rgba(255,255,255,.6);font-size:16px;margin-bottom:24px">You've gone from zero to JEE level! 🚀</p>
+    <div class="stats">
+      <div class="stat"><div class="sv" style="color:#f7c948" id="fxp">0</div><div class="sl">⚡ XP Earned</div></div>
+      <div class="stat"><div class="sv" style="color:#00e676" id="fco">0/20</div><div class="sl">✅ Correct</div></div>
+      <div class="stat"><div class="sv" style="color:#ff5252" id="flv">0</div><div class="sl">❤️ Lives Left</div></div>
+    </div>
+    <div class="recap">
+      <div class="recap-title">⚡ Your Relative Motion Toolkit</div>
+      <div class="recap-row">🔹 <strong>v<sub>AB</sub> = v<sub>A</sub> − v<sub>B</sub></strong> — relative velocity of A w.r.t. B</div>
+      <div class="recap-row">🔹 Same direction → subtract speeds | Opposite → add speeds</div>
+      <div class="recap-row">🔹 Boat straight across: sin θ = v<sub>river</sub>/v<sub>boat</sub></div>
+      <div class="recap-row">🔹 Min time: aim perpendicular. Min drift: aim upstream at angle.</div>
+      <div class="recap-row">🔹 Rain angle: tan θ = v<sub>man</sub>/v<sub>rain</sub></div>
+      <div class="recap-row">🔹 In free fall: relative acceleration = 0 ✨</div>
+    </div>
+    <button class="replay" onclick="location.reload()">🔄 Play Again!</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  BEAR SVG FACTORY
+// ═══════════════════════════════════════
+function bear(mood='chill', sz=110){
+  const b = {
+    body:`<ellipse cx="100" cy="100" rx="62" ry="58" fill="#8B5E3C"/>
+      <path d="M 45,120 Q 18,145 22,240 L 178,240 Q 182,145 155,120 Z" fill="#8B5E3C"/>`,
+    ears:`<circle cx="48" cy="57" r="20" fill="#8B5E3C"/>
+      <circle cx="152" cy="57" r="20" fill="#8B5E3C"/>
+      <circle cx="48" cy="57" r="12" fill="#6B3F2A"/>
+      <circle cx="152" cy="57" r="12" fill="#6B3F2A"/>`,
+    muzzle:`<ellipse cx="100" cy="150" rx="26" ry="32" fill="#D4956A"/>`,
+    nose:`<ellipse cx="100" cy="138" rx="7" ry="5" fill="#1a0a00"/>`,
+    belt:`<rect x="20" y="185" width="160" height="32" rx="10" fill="#00BCD4"/>
+      <rect x="78" y="190" width="44" height="22" rx="5" fill="#0097A7"/>
+      <rect x="86" y="194" width="12" height="14" rx="2" fill="rgba(0,0,0,.3)"/>`,
+    feet:`<ellipse cx="72" cy="256" rx="28" ry="14" fill="#7a5230"/>
+      <ellipse cx="128" cy="256" rx="28" ry="14" fill="#7a5230"/>`,
+  };
+  const eyes = {
+    chill:`<ellipse cx="78" cy="110" rx="13" ry="14" fill="white"/>
+      <ellipse cx="122" cy="110" rx="13" ry="14" fill="white"/>
+      <ellipse cx="80" cy="113" rx="7" ry="9" fill="#1a1a1a"/>
+      <ellipse cx="124" cy="113" rx="7" ry="9" fill="#1a1a1a"/>
+      <circle cx="83" cy="109" r="2.5" fill="white"/>
+      <circle cx="127" cy="109" r="2.5" fill="white"/>
+      <path d="M 68,99 Q 78,95 88,99" stroke="#5a3520" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M 112,99 Q 122,95 132,99" stroke="#5a3520" stroke-width="2.5" fill="none" stroke-linecap="round"/>`,
+    happy:`<ellipse cx="78" cy="108" rx="13" ry="15" fill="white"/>
+      <ellipse cx="122" cy="108" rx="13" ry="15" fill="white"/>
+      <ellipse cx="80" cy="112" rx="7" ry="9" fill="#1a1a1a"/>
+      <ellipse cx="124" cy="112" rx="7" ry="9" fill="#1a1a1a"/>
+      <circle cx="83" cy="108" r="2.5" fill="white"/>
+      <circle cx="127" cy="108" r="2.5" fill="white"/>
+      <path d="M 65,98 Q 78,92 90,98" stroke="#5a3520" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M 110,98 Q 122,92 135,98" stroke="#5a3520" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M 88,162 Q 100,172 112,162" stroke="#5a3520" stroke-width="2.5" fill="none" stroke-linecap="round"/>`,
+    wow:`<ellipse cx="78" cy="108" rx="15" ry="17" fill="white"/>
+      <ellipse cx="122" cy="108" rx="15" ry="17" fill="white"/>
+      <circle cx="80" cy="111" r="8" fill="#1a1a1a"/>
+      <circle cx="124" cy="111" r="8" fill="#1a1a1a"/>
+      <circle cx="83" cy="107" r="3" fill="white"/>
+      <circle cx="127" cy="107" r="3" fill="white"/>
+      <path d="M 66,96 Q 78,90 90,96" stroke="#5a3520" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M 110,96 Q 122,90 134,96" stroke="#5a3520" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <ellipse cx="100" cy="166" rx="9" ry="8" fill="#5a3520"/>`,
+    think:`<ellipse cx="78" cy="110" rx="13" ry="13" fill="white"/>
+      <ellipse cx="122" cy="108" rx="13" ry="15" fill="white"/>
+      <ellipse cx="80" cy="113" rx="7" ry="8" fill="#1a1a1a"/>
+      <ellipse cx="124" cy="111" rx="7" ry="9" fill="#1a1a1a"/>
+      <circle cx="83" cy="110" r="2.5" fill="white"/>
+      <circle cx="127" cy="108" r="2.5" fill="white"/>
+      <path d="M 68,99 Q 78,95 88,97" stroke="#5a3520" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M 112,96 Q 122,93 132,98" stroke="#5a3520" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <line x1="160" y1="140" x2="175" y2="125" stroke="#8B5E3C" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="178" cy="118" r="6" fill="#8B5E3C"/>`,
+    proud:`<path d="M 65,107 Q 78,100 90,107" stroke="#1a1a1a" stroke-width="3" fill="rgba(0,0,0,.15)" stroke-linecap="round"/>
+      <path d="M 110,107 Q 122,100 135,107" stroke="#1a1a1a" stroke-width="3" fill="rgba(0,0,0,.15)" stroke-linecap="round"/>
+      <path d="M 86,162 Q 100,175 114,162" stroke="#5a3520" stroke-width="3" fill="none" stroke-linecap="round"/>`,
+  };
+  return `<svg width="${sz}" viewBox="0 0 200 275" xmlns="http://www.w3.org/2000/svg">
+    ${b.ears}${b.body}${b.muzzle}${b.nose}${eyes[mood]||eyes.chill}${b.belt}${b.feet}
+  </svg>`;
+}
+
+// ═══════════════════════════════════════
+//  SVG SCENE BUILDERS
+// ═══════════════════════════════════════
+const S = {
+
+  trainSide(){return`<svg width="100%" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="sky1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0d1b3e"/><stop offset="100%" stop-color="#1a3a5c"/></linearGradient></defs>
+    <rect width="600" height="200" fill="url(#sky1)"/>
+    <!-- ground -->
+    <rect x="0" y="160" width="600" height="40" fill="#2d4a2d"/>
+    <rect x="0" y="155" width="600" height="8" fill="#4a3a2a"/>
+    <!-- tracks -->
+    <rect x="0" y="158" width="600" height="4" fill="#666" rx="2"/>
+    <!-- moving trees (background) -->
+    <g class="train-l" style="animation-duration:2s">
+      <rect x="50" y="100" width="18" height="55" fill="#4a7c4a" rx="3"/>
+      <ellipse cx="59" cy="95" rx="25" ry="28" fill="#5a9a5a"/>
+      <rect x="180" y="110" width="14" height="45" fill="#4a7c4a" rx="3"/>
+      <ellipse cx="187" cy="106" rx="20" ry="22" fill="#5a9a5a"/>
+      <rect x="350" y="95" width="20" height="60" fill="#4a7c4a" rx="3"/>
+      <ellipse cx="360" cy="90" rx="28" ry="30" fill="#5a9a5a"/>
+      <rect x="500" y="108" width="15" height="47" fill="#4a7c4a" rx="3"/>
+      <ellipse cx="507" cy="104" rx="21" ry="23" fill="#5a9a5a"/>
+    </g>
+    <!-- TRAIN -->
+    <rect x="120" y="80" width="360" height="75" rx="14" fill="#2a5298" stroke="#4a72d8" stroke-width="2"/>
+    <rect x="130" y="90" width="70" height="50" rx="6" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.2)" stroke-width="1"/>
+    <rect x="220" y="90" width="70" height="50" rx="6" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.2)" stroke-width="1"/>
+    <rect x="310" y="90" width="70" height="50" rx="6" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.2)" stroke-width="1"/>
+    <rect x="400" y="90" width="60" height="50" rx="6" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.2)" stroke-width="1"/>
+    <!-- wheels -->
+    <circle cx="165" cy="158" r="14" fill="#333" stroke="#666" stroke-width="3"/>
+    <circle cx="230" cy="158" r="14" fill="#333" stroke="#666" stroke-width="3"/>
+    <circle cx="370" cy="158" r="14" fill="#333" stroke="#666" stroke-width="3"/>
+    <circle cx="435" cy="158" r="14" fill="#333" stroke="#666" stroke-width="3"/>
+    <!-- direction arrow -->
+    <g>
+      <line x1="490" y1="50" x2="540" y2="50" stroke="#00e5ff" stroke-width="3" stroke-linecap="round"/>
+      <polygon points="540,44 555,50 540,56" fill="#00e5ff"/>
+      <text x="500" y="38" fill="#00e5ff" font-size="11" font-weight="700">Moving →</text>
+    </g>
+    <!-- bear inside window -->
+    <text x="248" y="128" text-anchor="middle" font-size="28">🐻</text>
+    <!-- label -->
+    <text x="300" y="185" text-anchor="middle" fill="rgba(255,255,255,.45)" font-size="10">Train moves RIGHT at 60 km/h. Bear sits inside.</text>
+  </svg>`},
+
+  twoCars(){return`<svg width="100%" viewBox="0 0 580 200" xmlns="http://www.w3.org/2000/svg">
+    <rect width="580" height="200" fill="#0d1b2e"/>
+    <!-- road -->
+    <rect x="0" y="130" width="580" height="50" fill="#2a2a2a" rx="4"/>
+    <rect x="0" y="148" width="580" height="6" fill="#555"/>
+    <!-- dashed lane -->
+    ${[0,80,160,240,320,400,480].map(x=>`<rect x="${x+10}" y="150" width="50" height="4" rx="2" fill="rgba(255,255,255,.3)"/>`).join('')}
+    <!-- Car A (red, faster) -->
+    <g transform="translate(60,90)">
+      <rect x="0" y="0" width="110" height="45" rx="10" fill="#e53935"/>
+      <rect x="15" y="-18" width="80" height="30" rx="8" fill="#ef5350"/>
+      <rect x="20" y="-12" width="30" height="20" rx="4" fill="rgba(135,206,250,.6)"/>
+      <rect x="58" y="-12" width="30" height="20" rx="4" fill="rgba(135,206,250,.6)"/>
+      <circle cx="22" cy="46" r="12" fill="#222" stroke="#555" stroke-width="2"/>
+      <circle cx="88" cy="46" r="12" fill="#222" stroke="#555" stroke-width="2"/>
+      <text x="55" y="30" text-anchor="middle" fill="white" font-size="11" font-weight="800">80 km/h</text>
+      <text x="55" y="-25" text-anchor="middle" fill="#ff7043" font-size="12" font-weight="800">Car A</text>
+    </g>
+    <!-- Car B (blue, slower) -->
+    <g transform="translate(350,90)">
+      <rect x="0" y="0" width="110" height="45" rx="10" fill="#1e88e5"/>
+      <rect x="15" y="-18" width="80" height="30" rx="8" fill="#42a5f5"/>
+      <rect x="20" y="-12" width="30" height="20" rx="4" fill="rgba(135,206,250,.6)"/>
+      <rect x="58" y="-12" width="30" height="20" rx="4" fill="rgba(135,206,250,.6)"/>
+      <circle cx="22" cy="46" r="12" fill="#222" stroke="#555" stroke-width="2"/>
+      <circle cx="88" cy="46" r="12" fill="#222" stroke="#555" stroke-width="2"/>
+      <text x="55" y="30" text-anchor="middle" fill="white" font-size="11" font-weight="800">50 km/h</text>
+      <text x="55" y="-25" text-anchor="middle" fill="#42a5f5" font-size="12" font-weight="800">Car B</text>
+    </g>
+    <!-- arrow -->
+    <line x1="80" y1="75" x2="140" y2="75" stroke="#ff7043" stroke-width="2.5" marker-end="url(#aR)"/>
+    <line x1="370" y1="75" x2="430" y2="75" stroke="#42a5f5" stroke-width="2.5" marker-end="url(#aB)"/>
+    <defs>
+      <marker id="aR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ff7043"/></marker>
+      <marker id="aB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#42a5f5"/></marker>
+    </defs>
+    <text x="290" y="185" text-anchor="middle" fill="rgba(255,255,255,.45)" font-size="10">Both cars move in the SAME direction →</text>
+  </svg>`},
+
+  headOn(){return`<svg width="100%" viewBox="0 0 580 200" xmlns="http://www.w3.org/2000/svg">
+    <rect width="580" height="200" fill="#0d1b2e"/>
+    <rect x="0" y="130" width="580" height="50" fill="#2a2a2a" rx="4"/>
+    <rect x="0" y="148" width="580" height="6" fill="#555"/>
+    <!-- Car A (red, going right) -->
+    <g transform="translate(30,88)">
+      <rect x="0" y="0" width="110" height="45" rx="10" fill="#e53935"/>
+      <rect x="15" y="-18" width="80" height="30" rx="8" fill="#ef5350"/>
+      <rect x="20" y="-12" width="60" height="20" rx="4" fill="rgba(135,206,250,.6)"/>
+      <circle cx="22" cy="46" r="12" fill="#222" stroke="#555" stroke-width="2"/>
+      <circle cx="88" cy="46" r="12" fill="#222" stroke="#555" stroke-width="2"/>
+      <text x="55" y="30" text-anchor="middle" fill="white" font-size="11" font-weight="800">40 m/s</text>
+      <text x="55" y="-26" text-anchor="middle" fill="#ff7043" font-size="12" font-weight="800">Train A →</text>
+    </g>
+    <!-- Car B (green, going left) -->
+    <g transform="translate(440,88)">
+      <rect x="0" y="0" width="110" height="45" rx="10" fill="#43a047"/>
+      <rect x="15" y="-18" width="80" height="30" rx="8" fill="#66bb6a"/>
+      <rect x="20" y="-12" width="60" height="20" rx="4" fill="rgba(135,206,250,.6)"/>
+      <circle cx="22" cy="46" r="12" fill="#222" stroke="#555" stroke-width="2"/>
+      <circle cx="88" cy="46" r="12" fill="#222" stroke="#555" stroke-width="2"/>
+      <text x="55" y="30" text-anchor="middle" fill="white" font-size="11" font-weight="800">30 m/s</text>
+      <text x="55" y="-26" text-anchor="middle" fill="#66bb6a" font-size="12" font-weight="800">← Train B</text>
+    </g>
+    <!-- arrows pointing toward each other -->
+    <line x1="170" y1="75" x2="280" y2="75" stroke="#ff7043" stroke-width="3" marker-end="url(#aRH)"/>
+    <line x1="410" y1="75" x2="300" y2="75" stroke="#66bb6a" stroke-width="3" marker-end="url(#aGH)"/>
+    <text x="290" y="70" text-anchor="middle" fill="#f7c948" font-size="12" font-weight="800">💥 CLOSING!</text>
+    <defs>
+      <marker id="aRH" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ff7043"/></marker>
+      <marker id="aGH" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#66bb6a"/></marker>
+    </defs>
+    <text x="290" y="190" text-anchor="middle" fill="rgba(255,255,255,.45)" font-size="10">Trains approaching from OPPOSITE directions</text>
+  </svg>`},
+
+  riverTop(){return`<svg width="100%" viewBox="0 0 560 220" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#1565C0"/><stop offset="100%" stop-color="#0D47A1"/>
+      </linearGradient>
+    </defs>
+    <!-- banks -->
+    <rect width="560" height="40" fill="#4CAF50" rx="0"/>
+    <rect x="0" y="180" width="560" height="40" fill="#4CAF50" rx="0"/>
+    <!-- water -->
+    <rect x="0" y="40" width="560" height="140" fill="url(#water)"/>
+    <!-- wave lines -->
+    ${[0,1,2,3].map(i=>`<path d="M 0,${70+i*28} Q 70,${65+i*28} 140,${70+i*28} Q 210,${75+i*28} 280,${70+i*28} Q 350,${65+i*28} 420,${70+i*28} Q 490,${75+i*28} 560,${70+i*28}" stroke="rgba(255,255,255,.12)" stroke-width="2" fill="none"/>`).join('')}
+    <!-- current arrows -->
+    ${[0,1,2,3,4].map(i=>`
+      <line x1="${80+i*90}" y1="110" x2="${130+i*90}" y2="110" stroke="rgba(255,255,255,.35)" stroke-width="2"/>
+      <polygon points="${130+i*90},106 ${140+i*90},110 ${130+i*90},114" fill="rgba(255,255,255,.35)"/>
+    `).join('')}
+    <text x="430" y="115" fill="rgba(255,255,255,.6)" font-size="11" font-weight="700">→ v_river</text>
+    <!-- point A and B -->
+    <circle cx="80" cy="185" r="10" fill="#f7c948" stroke="white" stroke-width="2"/>
+    <text x="80" y="190" text-anchor="middle" fill="#0a0a1a" font-size="11" font-weight="900">A</text>
+    <circle cx="80" cy="30" r="10" fill="#00e676" stroke="white" stroke-width="2"/>
+    <text x="80" y="35" text-anchor="middle" fill="#0a0a1a" font-size="11" font-weight="900">B</text>
+    <!-- width marker -->
+    <line x1="30" y1="45" x2="30" y2="178" stroke="white" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="18" y="115" fill="white" font-size="10" font-weight="700" transform="rotate(-90,18,115)">WIDTH = 80 m</text>
+    <!-- boat -->
+    <g class="boat-bob" transform="translate(80,100)">
+      <ellipse cx="0" cy="8" rx="22" ry="10" fill="#8D6E63"/>
+      <polygon points="-5,-2 -5,8 18,4" fill="#FF8F00"/>
+      <text x="0" y="5" text-anchor="middle" font-size="14">⛵</text>
+    </g>
+  </svg>`},
+
+  rainScene(){return`<svg width="100%" viewBox="0 0 500 220" xmlns="http://www.w3.org/2000/svg">
+    <rect width="500" height="220" fill="#0d1b3e"/>
+    <!-- ground -->
+    <rect x="0" y="180" width="500" height="40" fill="#1a2a1a"/>
+    <!-- rain drops (many) -->
+    ${Array.from({length:30},(_,i)=>{
+      const x=Math.floor(Math.abs(Math.sin(i*17)*500));
+      const y=Math.floor(Math.abs(Math.cos(i*13)*180));
+      const delay=(i*0.12)%1.2;
+      return`<line x1="${x}" y1="${y}" x2="${x-8}" y2="${y+20}" stroke="#7ec8e3" stroke-width="1.5" stroke-linecap="round" opacity="${0.4+Math.sin(i)*.4}" style="animation-delay:${delay}s" class="rain-drop"/>`;
+    }).join('')}
+    <!-- man standing -->
+    <g transform="translate(160,80)">
+      <circle cx="0" cy="0" r="18" fill="#ff8f00"/>
+      <rect x="-14" y="16" width="28" height="52" rx="8" fill="#37474F"/>
+      <rect x="-16" y="62" width="10" height="30" rx="5" fill="#37474F"/>
+      <rect x="6" y="62" width="10" height="30" rx="5" fill="#37474F"/>
+      <!-- umbrella tilted 30° from vertical -->
+      <g transform="rotate(-30)">
+        <line x1="0" y1="0" x2="0" y2="-55" stroke="#795548" stroke-width="3"/>
+        <path d="M -35,-55 Q 0,-85 35,-55 Z" fill="#E53935" opacity="0.9"/>
+      </g>
+      <text x="0" y="110" text-anchor="middle" fill="rgba(255,255,255,.6)" font-size="10">Standing still</text>
+    </g>
+    <!-- man running -->
+    <g transform="translate(340,80)">
+      <circle cx="0" cy="0" r="18" fill="#ff8f00"/>
+      <rect x="-14" y="16" width="28" height="52" rx="8" fill="#37474F"/>
+      <rect x="-20" y="55" width="10" height="30" rx="5" fill="#37474F" transform="rotate(-20)"/>
+      <rect x="10" y="55" width="10" height="30" rx="5" fill="#37474F" transform="rotate(25)"/>
+      <!-- umbrella vertical when running -->
+      <g transform="rotate(0)">
+        <line x1="0" y1="0" x2="0" y2="-55" stroke="#795548" stroke-width="3"/>
+        <path d="M -35,-55 Q 0,-85 35,-55 Z" fill="#1E88E5" opacity="0.9"/>
+      </g>
+      <!-- running arrow -->
+      <line x1="20" y1="40" x2="60" y2="40" stroke="#f7c948" stroke-width="2.5"/>
+      <polygon points="60,36 72,40 60,44" fill="#f7c948"/>
+      <text x="0" y="110" text-anchor="middle" fill="rgba(255,255,255,.6)" font-size="10">Running →</text>
+    </g>
+    <!-- rain angle label -->
+    <text x="160" y="200" text-anchor="middle" fill="#7ec8e3" font-size="11" font-weight="700">Rain at 30° from vertical</text>
+    <text x="340" y="200" text-anchor="middle" fill="#7ec8e3" font-size="11" font-weight="700">Rain hits him vertically!</text>
+  </svg>`},
+
+  vectorAdd(){return`<svg width="100%" viewBox="0 0 540 230" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="va" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E88E5"/></marker>
+      <marker id="vb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#43A047"/></marker>
+      <marker id="vc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#E53935"/></marker>
+    </defs>
+    <rect width="540" height="230" fill="#0a0a1a"/>
+    <!-- grid -->
+    ${Array.from({length:8},(_,i)=>`<line x1="${60+i*60}" y1="20" x2="${60+i*60}" y2="210" stroke="rgba(255,255,255,.06)" stroke-width="1"/>`).join('')}
+    ${Array.from({length:5},(_,i)=>`<line x1="40" y1="${40+i*40}" x2="520" y2="${40+i*40}" stroke="rgba(255,255,255,.06)" stroke-width="1"/>`).join('')}
+    <!-- axes -->
+    <line x1="60" y1="200" x2="510" y2="200" stroke="rgba(255,255,255,.3)" stroke-width="1.5"/>
+    <line x1="60" y1="200" x2="60" y2="20" stroke="rgba(255,255,255,.3)" stroke-width="1.5"/>
+    <text x="515" y="204" fill="rgba(255,255,255,.4)" font-size="11">x</text>
+    <text x="52" y="18" fill="rgba(255,255,255,.4)" font-size="11">y</text>
+    <!-- v_boat (upward) -->
+    <line x1="200" y1="200" x2="200" y2="80" stroke="#1E88E5" stroke-width="3" marker-end="url(#va)"/>
+    <text x="160" y="145" fill="#1E88E5" font-size="13" font-weight="800">v_boat</text>
+    <text x="160" y="160" fill="#1E88E5" font-size="11">(4 m/s ↑)</text>
+    <!-- v_river (rightward) -->
+    <line x1="200" y1="80" x2="380" y2="80" stroke="#43A047" stroke-width="3" marker-end="url(#vb)"/>
+    <text x="270" y="68" fill="#43A047" font-size="13" font-weight="800">v_river</text>
+    <text x="265" y="53" fill="#43A047" font-size="11">(3 m/s →)</text>
+    <!-- resultant -->
+    <line x1="200" y1="200" x2="380" y2="80" stroke="#E53935" stroke-width="3" stroke-dasharray="8,4" marker-end="url(#vc)"/>
+    <text x="330" y="170" fill="#E53935" font-size="13" font-weight="800">v_actual</text>
+    <text x="340" y="186" fill="#E53935" font-size="10">=√(4²+3²)=5</text>
+    <!-- angle arc -->
+    <path d="M 200,160 Q 240,160 240,120" stroke="#f7c948" stroke-width="1.5" fill="none"/>
+    <text x="248" y="155" fill="#f7c948" font-size="11" font-weight="700">θ</text>
+  </svg>`},
+
+  freeFall(){return`<svg width="100%" viewBox="0 0 500 210" xmlns="http://www.w3.org/2000/svg">
+    <rect width="500" height="210" fill="#0a0a1a"/>
+    <!-- Two balls falling -->
+    <g>
+      <!-- Ball 1 -->
+      <circle cx="160" cy="60" r="22" fill="#E53935" stroke="#ff7043" stroke-width="2"/>
+      <text x="160" y="66" text-anchor="middle" fill="white" font-size="13" font-weight="800">A</text>
+      <line x1="160" y1="82" x2="160" y2="130" stroke="#E53935" stroke-width="2.5"/>
+      <polygon points="155,130 165,130 160,145" fill="#E53935"/>
+      <text x="110" y="110" fill="#E53935" font-size="11">a = g↓</text>
+      <!-- Ball 2 -->
+      <circle cx="340" cy="30" r="22" fill="#1E88E5" stroke="#42a5f5" stroke-width="2"/>
+      <text x="340" y="36" text-anchor="middle" fill="white" font-size="13" font-weight="800">B</text>
+      <line x1="340" y1="52" x2="340" y2="100" stroke="#1E88E5" stroke-width="2.5"/>
+      <polygon points="335,100 345,100 340,115" fill="#1E88E5"/>
+      <text x="390" y="80" fill="#1E88E5" font-size="11">a = g↓</text>
+    </g>
+    <!-- relative accel = 0 -->
+    <rect x="140" y="158" width="220" height="36" rx="12" fill="rgba(0,230,118,.15)" stroke="#00e676" stroke-width="1.5"/>
+    <text x="250" y="181" text-anchor="middle" fill="#00e676" font-size="14" font-weight="900">a_rel = g − g = 0 !</text>
+    <text x="250" y="200" text-anchor="middle" fill="rgba(255,255,255,.4)" font-size="10">They appear STATIONARY relative to each other</text>
+  </svg>`},
+
+  projectilePath(){return`<svg width="100%" viewBox="0 0 540 220" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="pb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#f7c948"/></marker>
+    </defs>
+    <rect width="540" height="220" fill="#0a0a1a"/>
+    <!-- ground -->
+    <line x1="40" y1="190" x2="500" y2="190" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
+    <!-- parabola path from ground perspective -->
+    <path d="M 60,190 Q 200,40 380,190" stroke="#f7c948" stroke-width="2.5" fill="none" stroke-dasharray="8,4"/>
+    <!-- ball position dots -->
+    <circle cx="60" cy="190" r="8" fill="#f7c948"/>
+    <circle cx="140" cy="120" r="8" fill="#f7c948"/>
+    <circle cx="220" cy="68" r="8" fill="#f7c948"/>
+    <circle cx="300" cy="90" r="8" fill="#f7c948"/>
+    <circle cx="380" cy="190" r="8" fill="#f7c948"/>
+    <text x="210" y="40" text-anchor="middle" fill="#f7c948" font-size="13" font-weight="700">Parabola (from ground)</text>
+    <!-- relative path (straight line, two balls same initial vel) -->
+    <line x1="400" y1="60" x2="500" y2="60" stroke="#00e676" stroke-width="2.5" marker-end="url(#pb)"/>
+    <text x="440" y="50" text-anchor="middle" fill="#00e676" font-size="11" font-weight="700">Straight line</text>
+    <text x="440" y="80" text-anchor="middle" fill="#00e676" font-size="10">(relative to each other)</text>
+    <text x="270" y="210" text-anchor="middle" fill="rgba(255,255,255,.4)" font-size="10">Ball path seen from GROUND vs seen from OTHER BALL</text>
+  </svg>`},
+
+  jee1Scene(){return`<svg width="100%" viewBox="0 0 540 220" xmlns="http://www.w3.org/2000/svg">
+    <rect width="540" height="220" fill="#0a0a1a"/>
+    <!-- ground -->
+    <rect x="0" y="185" width="540" height="35" fill="#1a2a1a"/>
+    <!-- rain lines (vertical = actual) -->
+    ${Array.from({length:18},(_,i)=>`<line x1="${30+i*28}" y1="${Math.random()*60|0}" x2="${30+i*28-0}" y2="${(Math.random()*60|0)+50}" stroke="#7ec8e3" stroke-width="1.5" opacity="0.5"/>`).join('')}
+    <!-- man standing, rain at 30° -->
+    <g transform="translate(130,90)">
+      <circle cx="0" cy="-8" r="16" fill="#ff8f00"/>
+      <rect x="-12" y="8" width="24" height="48" rx="7" fill="#37474F"/>
+      <g transform="rotate(-30,0,-8)">
+        <line x1="0" y1="-8" x2="0" y2="-58" stroke="#795548" stroke-width="3"/>
+        <path d="M -32,-58 Q 0,-82 32,-58 Z" fill="#E53935"/>
+      </g>
+      <text x="0" y="72" text-anchor="middle" fill="white" font-size="10">v_man=0</text>
+      <text x="-52" y="-35" fill="#7ec8e3" font-size="9">Rain 30°</text>
+    </g>
+    <!-- vector diagram -->
+    <g transform="translate(320,50)">
+      <text x="0" y="0" fill="rgba(255,255,255,.6)" font-size="11" font-weight="700">Vector diagram:</text>
+      <line x1="0" y1="30" x2="0" y2="110" stroke="#7ec8e3" stroke-width="2.5"/>
+      <polygon points="-4,110 4,110 0,122" fill="#7ec8e3"/>
+      <text x="8" y="75" fill="#7ec8e3" font-size="10">v_rain</text>
+      <line x1="0" y1="30" x2="-45" y2="110" stroke="#E53935" stroke-width="2" stroke-dasharray="5,3"/>
+      <text x="-60" y="75" fill="#E53935" font-size="10">appar.</text>
+      <text x="-14" y="125" fill="rgba(255,255,255,.5)" font-size="9">30°</text>
+    </g>
+    <text x="270" y="200" text-anchor="middle" fill="rgba(255,255,255,.4)" font-size="10">Rain falls at 10 m/s. Man stands still → umbrella at 30° from vertical.</text>
+  </svg>`},
+
+  jee2Scene(){return`<svg width="100%" viewBox="0 0 540 220" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="w2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1565C0"/><stop offset="100%" stop-color="#0D47A1"/></linearGradient>
+    </defs>
+    <rect width="540" height="220" fill="#0d1b2e"/>
+    <rect x="0" y="0" width="540" height="40" fill="#4CAF50"/>
+    <rect x="0" y="180" width="540" height="40" fill="#4CAF50"/>
+    <rect x="0" y="40" width="540" height="140" fill="url(#w2)"/>
+    <!-- current -->
+    ${[0,1,2].map(i=>`<line x1="${60+i*150}" y1="110" x2="${110+i*150}" y2="110" stroke="rgba(255,255,255,.3)" stroke-width="2"/><polygon points="${110+i*150},106 ${122+i*150},110 ${110+i*150},114" fill="rgba(255,255,255,.3)"/>`).join('')}
+    <text x="480" y="115" fill="rgba(255,255,255,.5)" font-size="10">v_r=3 m/s</text>
+    <!-- boat going perpendicular for min time -->
+    <g transform="translate(80,105)" class="boat-bob">
+      <line x1="0" y1="10" x2="0" y2="-55" stroke="#f7c948" stroke-width="2.5"/>
+      <polygon points="-4,-55 4,-55 0,-68" fill="#f7c948"/>
+      <text x="10" y="-30" fill="#f7c948" font-size="10" font-weight="700">v_b=5 m/s ↑</text>
+      <ellipse cx="0" cy="12" rx="20" ry="8" fill="#8D6E63"/>
+    </g>
+    <!-- drift arrow -->
+    <line x1="80" y1="175" x2="236" y2="175" stroke="#E53935" stroke-width="2.5"/>
+    <polygon points="236,171 248,175 236,179" fill="#E53935"/>
+    <text x="155" y="170" text-anchor="middle" fill="#E53935" font-size="10" font-weight="700">Drift = ?</text>
+    <!-- width marker -->
+    <line x1="30" y1="45" x2="30" y2="178" stroke="white" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="18" y="115" fill="white" font-size="9" transform="rotate(-90,18,115)">60 m</text>
+    <!-- target B -->
+    <circle cx="80" cy="22" r="9" fill="#00e676"/>
+    <text x="80" y="27" text-anchor="middle" fill="#0a0a1a" font-size="10" font-weight="900">B</text>
+    <circle cx="80" cy="195" r="9" fill="#f7c948"/>
+    <text x="80" y="200" text-anchor="middle" fill="#0a0a1a" font-size="10" font-weight="900">A</text>
+  </svg>`},
+
+  frameOfRef(){return`<svg width="100%" viewBox="0 0 560 220" xmlns="http://www.w3.org/2000/svg">
+    <rect width="560" height="220" fill="#0d1b2e"/>
+    <!-- Train window view -->
+    <!-- Sky outside -->
+    <rect x="0" y="0" width="560" height="160" fill="#0d1b3e"/>
+    <!-- ground strip -->
+    <rect x="0" y="155" width="560" height="65" fill="#1a3a1a"/>
+    <!-- track -->
+    <rect x="0" y="160" width="560" height="5" fill="#4a3a2a"/>
+    <!-- train interior walls -->
+    <rect x="0" y="0" width="560" height="160" fill="none"/>
+    <!-- window frame -->
+    <rect x="80" y="20" width="180" height="120" rx="8" fill="rgba(135,206,250,.08)" stroke="rgba(255,255,255,.3)" stroke-width="3"/>
+    <rect x="310" y="20" width="180" height="120" rx="8" fill="rgba(135,206,250,.08)" stroke="rgba(255,255,255,.3)" stroke-width="3"/>
+    <!-- outside scene through window 1: trees moving left -->
+    <clipPath id="win1"><rect x="80" y="20" width="180" height="120" rx="8"/></clipPath>
+    <g clip-path="url(#win1)" class="train-l" style="animation-duration:1.8s">
+      <rect x="100" y="60" width="14" height="70" fill="#4a7c4a" rx="2"/>
+      <ellipse cx="107" cy="55" rx="22" ry="24" fill="#5a9a5a"/>
+      <rect x="200" y="75" width="11" height="55" fill="#4a7c4a" rx="2"/>
+      <ellipse cx="205" cy="71" rx="17" ry="18" fill="#5a9a5a"/>
+      <rect x="280" y="65" width="13" height="65" fill="#4a7c4a" rx="2"/>
+      <ellipse cx="286" cy="61" rx="19" ry="20" fill="#5a9a5a"/>
+    </g>
+    <!-- inside window 1: person A sitting -->
+    <text x="170" y="145" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="10">Window A: trees move ←</text>
+    <!-- window 2: person B view from platform -->
+    <clipPath id="win2"><rect x="310" y="20" width="180" height="120" rx="8"/></clipPath>
+    <g clip-path="url(#win2)" class="train-r" style="animation-duration:1.8s">
+      <rect x="320" y="50" width="120" height="60" rx="8" fill="#2a5298" opacity="0.9"/>
+      <circle cx="350" cy="55" r="10" fill="#ff8f00"/>
+      <rect x="340" y="65" width="20" height="30" rx="5" fill="#37474F"/>
+    </g>
+    <text x="400" y="145" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="10">Window B: train moves →</text>
+    <!-- labels -->
+    <text x="170" y="195" text-anchor="middle" fill="#00e5ff" font-size="12" font-weight="800">You on train</text>
+    <text x="400" y="195" text-anchor="middle" fill="#f7c948" font-size="12" font-weight="800">You on platform</text>
+    <text x="280" y="210" text-anchor="middle" fill="rgba(255,255,255,.4)" font-size="10">SAME EVENT, different observers = different motion!</text>
+  </svg>`},
+
+  boatAngle(){return`<svg width="100%" viewBox="0 0 540 220" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="w3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1565C0"/><stop offset="100%" stop-color="#0D47A1"/></linearGradient>
+      <marker id="bv" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#f7c948"/></marker>
+      <marker id="rv" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#E53935"/></marker>
+      <marker id="res" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#00e676"/></marker>
+    </defs>
+    <rect x="0" y="0" width="540" height="40" fill="#4CAF50"/>
+    <rect x="0" y="180" width="540" height="40" fill="#4CAF50"/>
+    <rect x="0" y="40" width="540" height="140" fill="url(#w3)"/>
+    <!-- current arrows -->
+    ${[0,1,2,3].map(i=>`<line x1="${80+i*110}" y1="110" x2="${130+i*110}" y2="110" stroke="rgba(255,255,255,.25)" stroke-width="1.5"/><polygon points="${130+i*110},106 ${140+i*110},110 ${130+i*110},114" fill="rgba(255,255,255,.25)"/>`).join('')}
+    <!-- Boat aimed upstream at angle -->
+    <g transform="translate(120,180)">
+      <!-- boat aimed upstream+across -->
+      <line x1="0" y1="0" x2="-30" y2="-110" stroke="#f7c948" stroke-width="2.5" marker-end="url(#bv)"/>
+      <text x="-55" y="-55" fill="#f7c948" font-size="10" font-weight="700">v_boat</text>
+      <!-- river pushes right -->
+      <line x1="-30" y1="-110" x2="50" y2="-110" stroke="#E53935" stroke-width="2.5" marker-end="url(#rv)"/>
+      <text x="10" y="-120" fill="#E53935" font-size="10">+v_river</text>
+      <!-- resultant goes straight across -->
+      <line x1="0" y1="0" x2="50" y2="-110" stroke="#00e676" stroke-width="2.5" stroke-dasharray="8,4" marker-end="url(#res)"/>
+      <text x="65" y="-60" fill="#00e676" font-size="11" font-weight="800">Straight!</text>
+      <!-- angle arc -->
+      <path d="M 0,-30 Q -15,-30 -18,-18" stroke="#f7c948" stroke-width="1.5" fill="none"/>
+      <text x="-35" y="-12" fill="#f7c948" font-size="10">θ</text>
+      <ellipse cx="0" cy="2" rx="18" ry="7" fill="#8D6E63"/>
+    </g>
+    <text x="270" y="200" text-anchor="middle" fill="rgba(255,255,255,.4)" font-size="10">sin θ = v_river / v_boat — aim UPSTREAM by this angle!</text>
+    <circle cx="170" cy="22" r="9" fill="#00e676"/>
+    <text x="170" y="27" text-anchor="middle" fill="#0a0a1a" font-size="10" font-weight="900">B</text>
+  </svg>`},
+
+  twoTrainsCross(){return`<svg width="100%" viewBox="0 0 580 200" xmlns="http://www.w3.org/2000/svg">
+    <rect width="580" height="200" fill="#0d1b2e"/>
+    <rect x="0" y="135" width="580" height="55" fill="#1a1a1a"/>
+    <rect x="0" y="148" width="580" height="6" fill="#555"/>
+    <!-- Train 1 (200m, going right) -->
+    <g>
+      <rect x="50" y="95" width="200" height="45" rx="8" fill="#2a5298" stroke="#4a72d8" stroke-width="1.5"/>
+      <text x="150" y="124" text-anchor="middle" fill="white" font-size="11" font-weight="800">Train 1: 200 m | 20 m/s →</text>
+      <circle cx="80" cy="142" r="10" fill="#333" stroke="#555" stroke-width="2"/>
+      <circle cx="220" cy="142" r="10" fill="#333" stroke="#555" stroke-width="2"/>
+    </g>
+    <!-- Train 2 (150m, going left) -->
+    <g>
+      <rect x="330" y="95" width="150" height="45" rx="8" fill="#43a047" stroke="#66bb6a" stroke-width="1.5"/>
+      <text x="405" y="124" text-anchor="middle" fill="white" font-size="11" font-weight="800">Train 2: 150 m | 30 m/s ←</text>
+      <circle cx="355" cy="142" r="10" fill="#333" stroke="#555" stroke-width="2"/>
+      <circle cx="455" cy="142" r="10" fill="#333" stroke="#555" stroke-width="2"/>
+    </g>
+    <!-- relative speed label -->
+    <rect x="150" y="30" width="280" height="50" rx="12" fill="rgba(247,201,72,.12)" stroke="#f7c948" stroke-width="1.5"/>
+    <text x="290" y="55" text-anchor="middle" fill="#f7c948" font-size="14" font-weight="800">v_rel = 20 + 30 = 50 m/s</text>
+    <text x="290" y="72" text-anchor="middle" fill="rgba(255,255,255,.6)" font-size="11">Total length to cross = 200+150 = 350 m</text>
+    <text x="290" y="185" text-anchor="middle" fill="rgba(255,255,255,.4)" font-size="10">Time = 350 / 50 = 7 seconds</text>
+  </svg>`},
+
+  relVelFormula(){return`<svg width="100%" viewBox="0 0 540 210" xmlns="http://www.w3.org/2000/svg">
+    <rect width="540" height="210" fill="#0a0a1a"/>
+    <!-- formula display -->
+    <rect x="60" y="30" width="420" height="70" rx="16" fill="rgba(0,229,255,.1)" stroke="#00e5ff" stroke-width="2"/>
+    <text x="270" y="60" text-anchor="middle" fill="#00e5ff" font-size="22" font-weight="900" font-family="Courier New">v_AB = v_A − v_B</text>
+    <text x="270" y="90" text-anchor="middle" fill="rgba(0,229,255,.6)" font-size="13">"velocity of A relative to B"</text>
+    <!-- examples -->
+    <g transform="translate(60,120)">
+      <rect x="0" y="0" width="190" height="70" rx="12" fill="rgba(67,160,71,.12)" stroke="#43a047" stroke-width="1.5"/>
+      <text x="95" y="22" text-anchor="middle" fill="#43a047" font-size="11" font-weight="700">SAME direction</text>
+      <text x="95" y="42" text-anchor="middle" fill="white" font-size="13" font-weight="800">80 − 50 = 30 km/h</text>
+      <text x="95" y="60" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="10">A seems slow to B</text>
+    </g>
+    <g transform="translate(290,120)">
+      <rect x="0" y="0" width="190" height="70" rx="12" fill="rgba(229,57,53,.12)" stroke="#E53935" stroke-width="1.5"/>
+      <text x="95" y="22" text-anchor="middle" fill="#E53935" font-size="11" font-weight="700">OPPOSITE direction</text>
+      <text x="95" y="42" text-anchor="middle" fill="white" font-size="13" font-weight="800">80 − (−50) = 130</text>
+      <text x="95" y="60" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="10">A seems very fast!</text>
+    </g>
+  </svg>`},
+
+  ballInTrain(){return`<svg width="100%" viewBox="0 0 540 210" xmlns="http://www.w3.org/2000/svg">
+    <rect width="540" height="210" fill="#0d1b2e"/>
+    <!-- train body -->
+    <rect x="30" y="60" width="480" height="110" rx="14" fill="#2a5298" stroke="#4a72d8" stroke-width="2" opacity="0.6"/>
+    <!-- window -->
+    <rect x="80" y="75" width="150" height="80" rx="6" fill="rgba(135,206,250,.1)" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
+    <!-- ball trajectory inside train: straight up-down -->
+    <line x1="155" y1="80" x2="155" y2="155" stroke="#f7c948" stroke-width="2" stroke-dasharray="6,4"/>
+    <circle cx="155" cy="90" r="12" fill="#f7c948"/>
+    <polygon points="150,155 160,155 155,165" fill="#f7c948"/>
+    <text x="155" y="200" text-anchor="middle" fill="#f7c948" font-size="11" font-weight="700">Inside train: ball goes ↕ (vertical)</text>
+    <!-- observer outside: parabola -->
+    <rect x="310" y="60" width="200" height="110" rx="6" fill="rgba(0,0,0,.3)" stroke="rgba(255,255,255,.2)" stroke-width="1.5"/>
+    <path d="M 320,155 Q 370,80 460,155" stroke="#00e5ff" stroke-width="2.5" fill="none" stroke-dasharray="7,4"/>
+    <circle cx="320" cy="155" r="9" fill="#00e5ff" opacity="0.6"/>
+    <circle cx="390" cy="92" r="9" fill="#00e5ff"/>
+    <circle cx="460" cy="155" r="9" fill="#00e5ff" opacity="0.6"/>
+    <text x="390" y="185" text-anchor="middle" fill="#00e5ff" font-size="11" font-weight="700">Outside: ball makes parabola!</text>
+    <!-- train arrow -->
+    <line x1="50" y1="42" x2="110" y2="42" stroke="white" stroke-width="2"/>
+    <polygon points="110,38 122,42 110,46" fill="white"/>
+    <text x="160" y="46" fill="rgba(255,255,255,.5)" font-size="10">Train moving → at v</text>
+  </svg>`},
+
+  minTimeDiag(){return`<svg width="100%" viewBox="0 0 540 220" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="w4" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1565C0"/><stop offset="100%" stop-color="#0D47A1"/></linearGradient>
+      <marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#f7c948"/></marker>
+      <marker id="m2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#00e5ff"/></marker>
+    </defs>
+    <rect x="0" y="0" width="540" height="35" fill="#4CAF50"/>
+    <rect x="0" y="185" width="540" height="35" fill="#4CAF50"/>
+    <rect x="0" y="35" width="540" height="150" fill="url(#w4)"/>
+    <!-- Min TIME: boat points straight up, drifts right -->
+    <g transform="translate(100,185)">
+      <line x1="0" y1="0" x2="0" y2="-145" stroke="#f7c948" stroke-width="2.5" marker-end="url(#m1)"/>
+      <line x1="0" y1="-145" x2="90" y2="-145" stroke="#E53935" stroke-width="2" stroke-dasharray="5,3"/>
+      <polygon points="85,-149 97,-145 85,-141" fill="#E53935"/>
+      <ellipse cx="0" cy="2" rx="16" ry="7" fill="#8D6E63"/>
+      <text x="-65" y="-70" fill="#f7c948" font-size="11" font-weight="700">v_boat ⊥</text>
+      <text x="35" y="-152" fill="#E53935" font-size="10">drift</text>
+      <text x="-30" y="20" fill="#f7c948" font-size="10" font-weight="700">MIN TIME</text>
+      <text x="-30" y="33" fill="rgba(255,255,255,.5)" font-size="9">t = width/v_b</text>
+    </g>
+    <!-- Min DRIFT: boat points upstream -->
+    <g transform="translate(360,185)">
+      <line x1="0" y1="0" x2="-50" y2="-140" stroke="#00e5ff" stroke-width="2.5" marker-end="url(#m2)"/>
+      <line x1="-50" y1="-140" x2="0" y2="-140" stroke="#E53935" stroke-width="2" stroke-dasharray="5,3"/>
+      <polygon points="0,-144 12,-140 0,-136" fill="#E53935"/>
+      <line x1="0" y1="0" x2="0" y2="-140" stroke="#00e676" stroke-width="2" stroke-dasharray="4,4"/>
+      <ellipse cx="0" cy="2" rx="16" ry="7" fill="#8D6E63"/>
+      <text x="8" y="-70" fill="#00e5ff" font-size="11" font-weight="700">v_boat ↗</text>
+      <text x="-80" y="20" fill="#00e5ff" font-size="10" font-weight="700">MIN DRIFT</text>
+      <text x="-80" y="33" fill="rgba(255,255,255,.5)" font-size="9">sin θ = v_r/v_b</text>
+    </g>
+    <text x="270" y="210" text-anchor="middle" fill="rgba(255,255,255,.4)" font-size="10">Two strategies — same river, different goals</text>
+  </svg>`},
+
+  relAccel(){return`<svg width="100%" viewBox="0 0 540 210" xmlns="http://www.w3.org/2000/svg">
+    <rect width="540" height="210" fill="#0a0a1a"/>
+    <!-- A accelerating -->
+    <g transform="translate(80,50)">
+      <rect x="0" y="0" width="120" height="60" rx="10" fill="#2a5298" stroke="#4a72d8" stroke-width="2"/>
+      <text x="60" y="38" text-anchor="middle" fill="white" font-size="14" font-weight="800">Object A</text>
+      <line x1="60" y1="60" x2="60" y2="95" stroke="#f7c948" stroke-width="2.5"/>
+      <polygon points="55,95 65,95 60,108" fill="#f7c948"/>
+      <text x="75" y="85" fill="#f7c948" font-size="11">a = 5 m/s²</text>
+    </g>
+    <!-- B same acceleration -->
+    <g transform="translate(330,50)">
+      <rect x="0" y="0" width="120" height="60" rx="10" fill="#43a047" stroke="#66bb6a" stroke-width="2"/>
+      <text x="60" y="38" text-anchor="middle" fill="white" font-size="14" font-weight="800">Object B</text>
+      <line x1="60" y1="60" x2="60" y2="95" stroke="#f7c948" stroke-width="2.5"/>
+      <polygon points="55,95 65,95 60,108" fill="#f7c948"/>
+      <text x="75" y="85" fill="#f7c948" font-size="11">a = 5 m/s²</text>
+    </g>
+    <!-- relative = 0 -->
+    <rect x="140" y="140" width="260" height="45" rx="14" fill="rgba(0,230,118,.12)" stroke="#00e676" stroke-width="2"/>
+    <text x="270" y="159" text-anchor="middle" fill="#00e676" font-size="13" font-weight="800">a_AB = 5 − 5 = 0</text>
+    <text x="270" y="177" text-anchor="middle" fill="rgba(255,255,255,.6)" font-size="11">They appear stationary to each other!</text>
+    <text x="270" y="198" text-anchor="middle" fill="rgba(255,255,255,.35)" font-size="10">KEY IDEA: Same acceleration → Zero relative acceleration</text>
+  </svg>`},
+};
+
+// ═══════════════════════════════════════
+//  QUESTIONS (20)
+// ═══════════════════════════════════════
+const Qs = [
+  // ─── ZONE 1 ─────────────────────────
+  {
+    zone:'ZONE 1 — What IS Motion? 🚂', zcol:'#00e5ff',
+    mood:'chill', say:'Psst — are you REALLY sitting still right now? 🤔',
+    scene:'trainSide',
+    type:'tf', q:'The bear is sitting still (not moving).',
+    correct:'both',
+    ok:'🎉 BOTH are correct! The bear is not moving relative to its SEAT, but IS moving relative to the trees outside. Motion depends on your FRAME OF REFERENCE!',
+    bad:'Actually — BOTH answers are correct depending on who is watching! This is the whole point of relative motion 🤯'
+  },
+  {
+    zone:'ZONE 1 — What IS Motion? 🚂', zcol:'#00e5ff',
+    mood:'think', say:'Two people, two truths. Who is right about the motion? 🤯',
+    scene:'frameOfRef',
+    type:'mcq',
+    q:'Person on the train says "I\'m still." Person on platform says "You\'re moving." Who is CORRECT?',
+    opts:['Person on train','Person on platform','Both are wrong','BOTH are correct!'],
+    correct:3,
+    ok:'💡 BOTH are correct! Each is right in their own FRAME OF REFERENCE. There is no "absolute" motion — only relative motion!',
+    bad:'Both are correct! In physics, there is no single "truth" about motion — it always depends on the observer\'s frame of reference.'
+  },
+  {
+    zone:'ZONE 1 — What IS Motion? 🚂', zcol:'#00e5ff',
+    mood:'proud', say:'Here is the magic formula. Let it sink in! ✨',
+    scene:'relVelFormula',
+    type:'mcq',
+    q:'Car A moves at 80 km/h →. Car B moves at 50 km/h →. What does Car A\'s speed appear to be for someone INSIDE Car B?',
+    opts:['130 km/h →','80 km/h →','30 km/h →','50 km/h →'],
+    correct:2,
+    ok:'⚡ Exactly! v_AB = v_A − v_B = 80 − 50 = 30 km/h. Car A only "creeps ahead" slowly from B\'s view.',
+    bad:'v_AB = v_A − v_B = 80 − 50 = 30 km/h. Subtract because they go in the SAME direction!'
+  },
+
+  // ─── ZONE 2 ─────────────────────────
+  {
+    zone:'ZONE 2 — Same Direction 🏎️', zcol:'#f7c948',
+    mood:'wow', say:'Watch the cars! What does the red car feel? 👀',
+    scene:'twoCars',
+    type:'fill',
+    q:'Car A: 80 km/h →. Car B: 50 km/h →. What is the speed of A as seen by B?',
+    pre:'v_AB =', suf:'km/h', ans:30, tol:0,
+    ok:'🎯 30 km/h! v_AB = 80 − 50 = 30 km/h. Same direction → SUBTRACT. That\'s why overtaking on a highway feels slow!',
+    bad:'v_AB = 80 − 50 = 30 km/h. Same direction = subtract speeds. Overtaking is slow because the gap closes at only 30 km/h!'
+  },
+  {
+    zone:'ZONE 2 — Same Direction 🏎️', zcol:'#f7c948',
+    mood:'think', say:'Car A is 200m behind Car B. How long to catch up?',
+    scene:'twoCars',
+    type:'fill',
+    q:'Car A (80 km/h) is 200 m behind Car B (50 km/h). Time to catch up? (in seconds)',
+    pre:'t =', suf:'seconds', ans:24, tol:1,
+    ok:'✅ 24 seconds! Relative speed = 30 km/h = 8.33 m/s. Time = 200 / 8.33 ≈ 24 s.',
+    bad:'24 s. Convert: 30 km/h = 8.33 m/s. Time = 200 m ÷ 8.33 m/s ≈ 24 s.'
+  },
+
+  // ─── ZONE 3 ─────────────────────────
+  {
+    zone:'ZONE 3 — Head On! 💥', zcol:'#E53935',
+    mood:'wow', say:'Now they\'re coming toward each other — DANGER! 🚨',
+    scene:'headOn',
+    type:'mcq',
+    q:'Train A: 40 m/s →. Train B: 30 m/s ←. What is the relative speed of approach?',
+    opts:['10 m/s','30 m/s','40 m/s','70 m/s'],
+    correct:3,
+    ok:'💥 70 m/s! Opposite directions → ADD speeds. v_rel = 40 + 30 = 70 m/s. That\'s why head-on crashes are so devastating!',
+    bad:'70 m/s. Opposite directions → ADD. v_rel = 40 − (−30) = 70 m/s. The minus sign of B\'s direction makes it addition!'
+  },
+  {
+    zone:'ZONE 3 — Head On! 💥', zcol:'#E53935',
+    mood:'think', say:'How many seconds until they pass each other completely?',
+    scene:'twoTrainsCross',
+    type:'fill',
+    q:'Train A: 200m long, 20 m/s →. Train B: 150m long, 30 m/s ←. Time for both to completely cross?',
+    pre:'t =', suf:'seconds', ans:7, tol:0,
+    ok:'🏆 7 seconds! Total length = 350m. Relative speed = 50 m/s. t = 350/50 = 7s.',
+    bad:'7 s. Total length to clear = 200+150 = 350m. Relative speed = 20+30 = 50 m/s. t = 350÷50 = 7s.'
+  },
+
+  // ─── ZONE 4 ─────────────────────────
+  {
+    zone:'ZONE 4 — Rain & Umbrella ☔', zcol:'#ce82ff',
+    mood:'think', say:'Rain is tricky! It changes direction depending on how fast you move! 🌧️',
+    scene:'rainScene',
+    type:'mcq',
+    q:'A man is still → rain falls vertically. He runs FORWARD. How should he tilt his umbrella?',
+    opts:['Backward ↙ (toward his back)','Stay vertical ↓','Forward ↗ (toward his front)','Sideways →'],
+    correct:2,
+    ok:'☔ Forward! When you run, rain appears to come FROM the front (like your face getting wet). So tilt umbrella toward the front!',
+    bad:'Tilt FORWARD! When running, the apparent velocity of rain has a backward component relative to you — so rain seems to hit from the front!'
+  },
+  {
+    zone:'ZONE 4 — Rain & Umbrella ☔', zcol:'#ce82ff',
+    mood:'wow', say:'The angle tells us the rain\'s TRUE speed. Can you find it?',
+    scene:'rainScene',
+    type:'mcq',
+    q:'Rain falls vertically at speed v. Man runs at 10 m/s. Rain now appears at 45° from vertical. What is v (rain speed)?',
+    opts:['5 m/s','10 m/s','15 m/s','20 m/s'],
+    correct:1,
+    ok:'⚡ 10 m/s! tan(45°) = v_man/v_rain = 1, so v_rain = v_man = 10 m/s. The angle of 45° means equal horizontal & vertical components!',
+    bad:'10 m/s. tan(angle) = v_man/v_rain. tan(45°) = 1, so v_rain = v_man = 10 m/s.'
+  },
+
+  // ─── ZONE 5 ─────────────────────────
+  {
+    zone:'ZONE 5 — River & Boat 🚤', zcol:'#00e676',
+    mood:'think', say:'The river pushes the boat sideways. Where should it aim? 🤔',
+    scene:'riverTop',
+    type:'mcq',
+    q:'River flows RIGHT. Boat wants to reach point B directly ABOVE A. Which way should the boat aim?',
+    opts:['Straight up ↑ (toward B)','Slightly RIGHT →','Slightly LEFT ← (upstream)','It doesn\'t matter'],
+    correct:2,
+    ok:'⚓ Upstream (LEFT)! The river pushes the boat right. To counteract this, the boat must aim LEFT (upstream). The two effects cancel out → straight path!',
+    bad:'Aim UPSTREAM (left)! River pushes right, so boat compensates by aiming left. They cancel out perfectly for a straight crossing!'
+  },
+  {
+    zone:'ZONE 5 — River & Boat 🚤', zcol:'#00e676',
+    mood:'chill', say:'Two choices: minimum TIME or minimum DRIFT. Which is which?',
+    scene:'minTimeDiag',
+    type:'mcq',
+    q:'To cross a river in MINIMUM TIME, the boat should:',
+    opts:['Aim upstream at sin⁻¹(v_r/v_b)','Aim straight across (⊥ to bank)','Aim downstream','Doesn\'t matter'],
+    correct:1,
+    ok:'⏱️ Straight across! All the boat\'s speed goes into crossing. t_min = width / v_boat. (The drift happens — but crossing is fastest!)',
+    bad:'Straight across (perpendicular)! This uses 100% of boat speed for crossing. t = width/v_boat. Drift occurs but time is minimized!'
+  },
+  {
+    zone:'ZONE 5 — River & Boat 🚤', zcol:'#00e676',
+    mood:'proud', say:'Let\'s calculate! River: 80m wide, boat: 4 m/s, river: 3 m/s.',
+    scene:'riverTop',
+    type:'fill',
+    q:'Boat speed = 4 m/s, river = 3 m/s, width = 80m. Boat aims straight across. Crossing time?',
+    pre:'t =', suf:'seconds', ans:20, tol:0,
+    ok:'⏱️ 20 s! t = width/v_boat = 80/4 = 20 s. The river flow doesn\'t affect the crossing time when going perpendicular!',
+    bad:'20 s. t = 80 ÷ 4 = 20 s. River flow only causes drift, not delay, when boat goes straight across!'
+  },
+  {
+    zone:'ZONE 5 — River & Boat 🚤', zcol:'#00e676',
+    mood:'think', say:'How far downstream does the boat land?',
+    scene:'riverTop',
+    type:'fill',
+    q:'Same river (v_river = 3 m/s, t = 20 s). How far downstream (drift) does boat land?',
+    pre:'Drift =', suf:'metres', ans:60, tol:0,
+    ok:'🎯 60 m! Drift = v_river × t = 3 × 20 = 60 m downstream. The river carries it sideways the whole time!',
+    bad:'60 m. Drift = v_river × time = 3 × 20 = 60 m. River keeps pushing sideways throughout the 20 seconds.'
+  },
+  {
+    zone:'ZONE 5 — River & Boat 🚤', zcol:'#00e676',
+    mood:'wow', say:'To go perfectly straight across — what angle should the boat aim?',
+    scene:'boatAngle',
+    type:'mcq',
+    q:'v_boat = 5 m/s, v_river = 3 m/s. To cross in a straight line, the boat aims upstream at angle θ. What is sin θ?',
+    opts:['sin θ = 5/3','sin θ = 3/5','sin θ = 4/5','sin θ = 3/4'],
+    correct:1,
+    ok:'✅ sin θ = 3/5! The upstream component of boat cancels the river: v_boat × sin θ = v_river → 5 sin θ = 3 → sin θ = 3/5.',
+    bad:'sin θ = 3/5. Upstream component must equal river speed: v_b × sin θ = v_r → 5 sin θ = 3 → sin θ = 3/5.'
+  },
+
+  // ─── ZONE 6 ─────────────────────────
+  {
+    zone:'ZONE 6 — Advanced Moves 🚀', zcol:'#ff6b35',
+    mood:'wow', say:'A ball thrown inside a moving train — it gets wild! 🎾',
+    scene:'ballInTrain',
+    type:'mcq',
+    q:'Ball thrown VERTICALLY UP inside a moving train. Seen from OUTSIDE (ground), the path is:',
+    opts:['Vertical line (straight up-down)','A horizontal line','A parabola (curved path)','A circle'],
+    correct:2,
+    ok:'🎉 Parabola! The ball has horizontal velocity (from the train) PLUS vertical velocity (throw). Ground observer sees both → parabola! Inside observer only sees vertical motion.',
+    bad:'Parabola! Ground observer sees horizontal motion of train PLUS vertical throw = parabolic path. Inside observer only sees vertical (no horizontal relative to train).'
+  },
+  {
+    zone:'ZONE 6 — Advanced Moves 🚀', zcol:'#ff6b35',
+    mood:'think', say:'Free fall is the most beautiful case. Watch carefully! 🌍',
+    scene:'freeFall',
+    type:'tf',
+    q:'Two balls are dropped from rest at the same time (different heights). Their relative acceleration is ZERO.',
+    correct:'true',
+    ok:'🌟 TRUE! Both have acceleration g downward. a_rel = g − g = 0. To each other, they appear STATIONARY. This is Einstein\'s equivalence principle! 🤯',
+    bad:'Actually TRUE! Both accelerate at g. Relative acceleration = g−g = 0. They seem frozen relative to each other. Einstein built General Relativity on this idea!'
+  },
+  {
+    zone:'ZONE 6 — Advanced Moves 🚀', zcol:'#ff6b35',
+    mood:'proud', say:'Two projectiles launched simultaneously — what do they see?',
+    scene:'projectilePath',
+    type:'mcq',
+    q:'Ball A and Ball B are launched at the same time with different velocities. What path does A trace as seen FROM Ball B?',
+    opts:['A parabola','A circle','A straight line','Impossible to determine'],
+    correct:2,
+    ok:'⚡ Straight line! Relative acceleration = 0 (both fall with g). Relative velocity is CONSTANT. Constant velocity → straight line path. They approach each other in a straight line!',
+    bad:'Straight line! Both have same acceleration (g). Relative acceleration = 0. Constant relative velocity = straight line path. This is why intercepting missiles use straight-line guidance!'
+  },
+  {
+    zone:'ZONE 6 — Advanced Moves 🚀', zcol:'#ff6b35',
+    mood:'chill', say:'What if the accelerations are DIFFERENT? Then it changes!',
+    scene:'relAccel',
+    type:'fill',
+    q:'Object A: acceleration 8 m/s². Object B: acceleration 3 m/s². What is the relative acceleration of A w.r.t. B?',
+    pre:'a_AB =', suf:'m/s²', ans:5, tol:0,
+    ok:'✅ 5 m/s²! a_AB = a_A − a_B = 8 − 3 = 5 m/s². When accelerations differ, the relative motion is non-uniform!',
+    bad:'5 m/s². a_AB = a_A − a_B = 8 − 3 = 5 m/s². Same formula as velocity — just applied to accelerations!'
+  },
+
+  // ─── JEE BOSS LEVEL ─────────────────
+  {
+    zone:'⚡ JEE BOSS LEVEL ⚡', zcol:'#f7c948',
+    mood:'wow', say:'This is an ACTUAL JEE-style question. You can solve this! 🏆',
+    scene:'jee1Scene',
+    type:'mcq',
+    jee:true,
+    q:'Rain falls vertically at 10 m/s. A man runs horizontally at 10 m/s. At what angle (from vertical) does the rain appear to fall to the running man?',
+    opts:['30°','45°','60°','90°'],
+    correct:1,
+    ok:'🏆 45°! v_rain_apparent = v_rain − v_man. Horizontal component = 10, Vertical = 10. tan θ = 10/10 = 1 → θ = 45°. When both speeds are equal, angle is always 45°!',
+    bad:'45°. Apparent rain velocity: horizontal = v_man = 10 m/s (backward), vertical = v_rain = 10 m/s (down). tan θ = 10/10 = 1 → θ = 45° from vertical.'
+  },
+  {
+    zone:'⚡ JEE BOSS LEVEL ⚡', zcol:'#f7c948',
+    mood:'proud', say:'Last one! You\'ve come from zero to HERE. Finish strong! 💪',
+    scene:'jee2Scene',
+    type:'mcq',
+    jee:true,
+    q:'A boat (5 m/s in still water) crosses a 60m wide river (current 3 m/s) aimed straight across. Find the drift.',
+    opts:['24 m','36 m','48 m','60 m'],
+    correct:1,
+    ok:'🎉🎉🎉 PERFECT! t = 60/5 = 12 s. Drift = v_river × t = 3 × 12 = 36 m. JEE CONQUERED! You went from zero to solving actual JEE problems! 🚀',
+    bad:'36 m. t = width/v_boat = 60/5 = 12 s. Drift = v_river × t = 3 × 12 = 36 m. You\'ll get it next time — the setup was perfect!'
+  },
+];
+
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
+let cur=0, lives=3, xp=0, corrCnt=0, answered=false;
+
+// ═══════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════
+function render(i){
+  const q = Qs[i];
+  answered = false;
+
+  document.getElementById('qn').textContent = `Question ${i+1} of ${Qs.length}`;
+  document.getElementById('pf').style.width = `${(i/Qs.length)*100}%`;
+
+  // Zone badge
+  const zb = document.getElementById('zb');
+  zb.textContent = q.zone;
+  zb.style.background = q.zcol + '22';
+  zb.style.border = `1.5px solid ${q.zcol}55`;
+  zb.style.color = q.zcol;
+
+  // Answer area
+  let ans = '';
+  if(q.type==='mcq'){
+    ans = `<div class="opts">${q.opts.map((o,idx)=>
+      `<button class="opt" id="o${idx}" onclick="chkMCQ(${idx})">${['🅐','🅑','🅒','🅓'][idx]} ${o}</button>`
+    ).join('')}</div>`;
+  } else if(q.type==='tf'){
+    ans = `<div class="tf-row">
+      <button class="tf t-btn" onclick="chkTF('true')">✅ TRUE</button>
+      <button class="tf f-btn" onclick="chkTF('false')">❌ FALSE</button>
+    </div>`;
+  } else if(q.type==='fill'){
+    ans = `<div class="fill-row">
+      <span class="fill-lbl">${q.pre}</span>
+      <input type="number" class="fill-in" id="fi" placeholder="?" onkeypress="if(event.key==='Enter')chkFill()">
+      <span class="fill-lbl">${q.suf}</span>
+      <button class="go-btn" onclick="chkFill()">Check ✓</button>
+    </div>`;
+  }
+
+  document.getElementById('qc').innerHTML = `
+    <div class="card">
+      <div class="bear-panel">
+        <div class="bear-wrap">${bear(q.mood,100)}</div>
+        <div class="speech">${q.jee?`<div class="jee-badge">JEE Level</div><br>`:''} ${q.say}</div>
+      </div>
+      <div class="scene">${S[q.scene]()}</div>
+      <div class="q-text">${q.q}</div>
+      ${ans}
+      <div class="fb" id="fb"></div>
+      <button class="nxt" id="nb" onclick="advance()">
+        ${i<Qs.length-1 ? 'Continue →' : '🏆 See Results!'}
+      </button>
+    </div>`;
+}
+
+// ═══════════════════════════════════════
+//  CHECKERS
+// ═══════════════════════════════════════
+function chkMCQ(sel){
+  if(answered)return;
+  answered=true;
+  const q=Qs[cur]; const ok=sel===q.correct;
+  document.getElementById(`o${sel}`).classList.add(ok?'ok':'bad');
+  if(!ok) document.getElementById(`o${q.correct}`).classList.add('ok');
+  document.querySelectorAll('.opt').forEach(b=>b.style.pointerEvents='none');
+  showFB(ok);
+}
+function chkTF(val){
+  if(answered)return;
+  answered=true;
+  const q=Qs[cur];
+  const ok = q.correct==='both' || val===q.correct;
+  const btn=document.querySelector(val==='true'?'.t-btn':'.f-btn');
+  btn.style.background=ok?'rgba(0,230,118,.3)':'rgba(255,82,82,.3)';
+  btn.style.borderColor=ok?'#00e676':'#ff5252';
+  document.querySelectorAll('.tf').forEach(b=>b.style.pointerEvents='none');
+  showFB(ok);
+}
+function chkFill(){
+  if(answered)return;
+  const q=Qs[cur]; const fi=document.getElementById('fi');
+  const v=parseFloat(fi.value); const ok=!isNaN(v)&&Math.abs(v-q.ans)<=q.tol;
+  answered=true;
+  fi.style.borderColor=ok?'#00e676':'#ff5252';
+  fi.style.background=ok?'rgba(0,230,118,.18)':'rgba(255,82,82,.18)';
+  showFB(ok);
+}
+
+function showFB(ok){
+  const q=Qs[cur]; const fb=document.getElementById('fb'); const nb=document.getElementById('nb');
+  if(ok){xp+=25;corrCnt++;document.getElementById('xpc').textContent=xp;if(Math.random()>.45)confetti(false);}
+  else{lives=Math.max(0,lives-1);upLives();}
+  fb.className='fb '+(ok?'ok':'bad');
+  fb.innerHTML=`<div class="fb-title">${ok?'🎉 +25 XP!':'💔 Close!'}</div><div class="fb-body">${ok?q.ok:q.bad}</div>`;
+  fb.style.display='block';
+  nb.style.display='block';
+  nb.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ═══════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════
+function advance(){
+  cur++;
+  if(cur>=Qs.length) finish();
+  else render(cur);
+}
+function finish(){
+  document.getElementById('qc').style.display='none';
+  document.getElementById('qn').style.display='none';
+  document.getElementById('zb').style.display='none';
+  const fin=document.getElementById('fin');
+  fin.classList.add('on');
+  document.getElementById('fxp').textContent=xp;
+  document.getElementById('fco').textContent=`${corrCnt}/20`;
+  document.getElementById('flv').textContent=lives;
+  confetti(true);
+}
+
+// ═══════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════
+function upLives(){
+  ['h1','h2','h3'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(i>=lives){el.classList.add('dead');el.textContent='🖤';}
+  });
+}
+function confetti(big){
+  const wrap=document.getElementById('cw');
+  const cols=['#00e5ff','#f7c948','#00e676','#ce82ff','#ff6b35','#E53935','#42a5f5'];
+  const n=big?120:40;
+  for(let i=0;i<n;i++){
+    const p=document.createElement('div');
+    p.className='cp';
+    p.style.left=(Math.random()*100)+'vw';
+    p.style.background=cols[Math.floor(Math.random()*cols.length)];
+    const sz=7+Math.random()*9;
+    p.style.width=sz+'px'; p.style.height=sz+'px';
+    p.style.borderRadius=Math.random()>.5?'50%':'2px';
+    const dur=2.5+Math.random()*2;
+    p.style.animationDuration=dur+'s';
+    p.style.animationDelay=(Math.random()*.8)+'s';
+    wrap.appendChild(p);
+    setTimeout(()=>p.remove(),(dur+.8)*1000);
+  }
+}
+
+// ═══════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════
+render(0);
+</script>
+</body>
+</html>
