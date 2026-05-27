@@ -92,49 +92,62 @@ fi
 
 echo "Environment setup complete."
 
-# ── Smart daily briefing ─────────────────────────────────
-echo ""
-echo "════════════════════════════════════════"
-echo "   CLAUDE CODE — SESSION BRIEFING"
-echo "   $(date '+%A, %B %d %Y — %H:%M')"
-echo "════════════════════════════════════════"
-
+# ── Session briefing — prints profile directly so Claude cannot miss it ──
 PROGRESS="$PROJECT_DIR/.claude/memory/progress.md"
 PROFILE="$PROJECT_DIR/.claude/memory/vipul-profile.md"
-ERRORS="$PROJECT_DIR/.claude/memory/errors.md"
+PREFERENCES="$PROJECT_DIR/.claude/memory/preferences.md"
+PROJECTS="$PROJECT_DIR/.claude/memory/projects.md"
+MISTAKES="$PROJECT_DIR/.claude/memory/mistakes.md"
 
-# ── CRITICAL: Always announce profile exists ──────────────
 echo ""
-echo "IMPORTANT — READ BEFORE RESPONDING:"
+echo "════════════════════════════════════════════════════════"
+echo "   CLAUDE CODE — SESSION BRIEFING"
+echo "   $(date '+%A, %B %d %Y — %H:%M')"
+echo "════════════════════════════════════════════════════════"
+
+# ── Print WHO the user is directly — no file reading needed ──
+echo ""
+echo "WHO YOU ARE TALKING TO:"
 if [ -f "$PROFILE" ]; then
-  echo "  ✅ vipul-profile.md EXISTS — Read it now (full cognitive + personality profile)"
-  echo "  ✅ preferences.md EXISTS — Read it now"
-  echo "  ✅ projects.md EXISTS — Read it now"
-  echo "  ✅ mistakes.md EXISTS — Read it now"
-  echo "  → Claude MUST read ALL memory files before responding to anything"
+  grep -E "^- |^## Who|^## Core" "$PROFILE" 2>/dev/null | head -12 | sed 's/^/  /'
 else
-  echo "  ⚠️  Profile file missing — ask Vipul to reshare his profile"
+  echo "  Vipul — student from India, learning to code, building AI education product"
 fi
 
-# Show last session summary
+# ── Print current projects ──
+echo ""
+echo "WHAT VIPUL IS BUILDING:"
+if [ -f "$PROJECTS" ]; then
+  grep -A3 "^### " "$PROJECTS" 2>/dev/null | head -10 | sed 's/^/  /'
+fi
+
+# ── Print key preferences ──
+echo ""
+echo "HOW TO COMMUNICATE:"
+if [ -f "$PREFERENCES" ]; then
+  grep -A2 "^## Explanation Style" "$PREFERENCES" 2>/dev/null | head -5 | sed 's/^/  /'
+fi
+
+# ── Print last session summary ──
+echo ""
+echo "LAST SESSION:"
 if [ -f "$PROGRESS" ]; then
-  echo ""
-  echo "LAST SESSION:"
-  grep -A8 "^## " "$PROGRESS" 2>/dev/null | head -10 || \
-  echo "  No previous session found."
+  grep -A6 "^## 20" "$PROGRESS" 2>/dev/null | head -8 | sed 's/^/  /' || \
+  echo "  No previous session logged."
 fi
 
-# Show any recent errors to be aware of
-if [ -f "$ERRORS" ] && grep -q "Exit code" "$ERRORS" 2>/dev/null; then
-  echo ""
-  echo "RECENT ERRORS TO WATCH:"
-  grep "Command:" "$ERRORS" 2>/dev/null | tail -3 | sed 's/^/  /'
+# ── Print mistakes to never repeat ──
+echo ""
+echo "MISTAKES TO NEVER REPEAT:"
+if [ -f "$MISTAKES" ]; then
+  grep -E "^- |^### " "$MISTAKES" 2>/dev/null | head -5 | sed 's/^/  /' || \
+  echo "  None logged yet."
 fi
 
-# Show available commands count
+# ── Commands available ──
 NEW_COMMANDS=$(ls "$PROJECT_DIR/.claude/commands/" 2>/dev/null | wc -l)
 echo ""
-echo "AVAILABLE COMMANDS: $NEW_COMMANDS custom slash commands ready"
-echo "  Type /memory for full briefing, /evolve to self-improve"
-echo "════════════════════════════════════════"
+echo "COMMANDS: $NEW_COMMANDS slash commands ready"
+echo "  /memory = full briefing  |  /evolve = self-improve  |  /build = build features"
+echo "════════════════════════════════════════════════════════"
 echo ""

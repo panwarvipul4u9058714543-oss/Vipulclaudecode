@@ -131,3 +131,4 @@ This helps track exactly what changed and when.
 
 ### Session ended: 2026-05-27 21:40
 
+- `2026-05-27 21:44` → edited `.claude/hooks/session-start.sh`
