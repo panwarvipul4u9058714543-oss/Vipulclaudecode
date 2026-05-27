@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐻 Relative Motion Quest</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green: #58CC02; --green-dark: #45A302; --green-glow: rgba(88,204,2,0.3);
+  --blue: #1CB0F6; --purple: #CE82FF; --yellow: #FFD900;
+  --red: #FF4B4B; --orange: #FF9600;
+  --bg: #131523; --card: #1e2235; --card2: #252a40;
+  --text: #fff; --sub: #afafc8;
+  --bear: #8B5A2B; --snout: #C68642; --cyan: #00C8E0;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;overflow-x:hidden;user-select:none}
+
+/* ── Header ── */
+#header{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--card);border-bottom:2px solid #2a2f4a;position:sticky;top:0;z-index:100}
+#close-btn{font-size:22px;cursor:pointer;color:var(--sub);padding:4px 8px;border-radius:8px;transition:.2s}
+#close-btn:hover{background:#2a2f4a}
+#progress-wrap{flex:1;background:#2a2f4a;border-radius:99px;height:14px;overflow:hidden}
+#progress-bar{height:100%;background:linear-gradient(90deg,var(--green),#7edb02);border-radius:99px;transition:width .6s cubic-bezier(.34,1.56,.64,1);box-shadow:0 0 10px var(--green-glow)}
+#xp-badge{background:linear-gradient(135deg,#FFD700,#FF9600);border-radius:12px;padding:4px 12px;font-weight:900;font-size:14px;color:#000;white-space:nowrap}
+.hearts{display:flex;gap:4px;font-size:18px}
+
+/* ── Screen system ── */
+.screen{display:none;flex-direction:column;align-items:center;min-height:calc(100vh - 60px);padding:20px}
+.screen.active{display:flex}
+
+/* ── Intro screen ── */
+#intro{justify-content:center;gap:24px;text-align:center}
+#intro h1{font-size:clamp(28px,6vw,48px);font-weight:900;background:linear-gradient(135deg,#00C8E0,#58CC02);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#intro p{color:var(--sub);font-size:16px;max-width:400px;line-height:1.6}
+.level-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.chip{padding:6px 14px;border-radius:99px;font-size:13px;font-weight:700}
+.start-btn{background:var(--green);color:#fff;border:none;padding:16px 48px;border-radius:16px;font-size:18px;font-weight:900;cursor:pointer;transition:.2s;box-shadow:0 4px 0 var(--green-dark)}
+.start-btn:hover{transform:translateY(-2px);box-shadow:0 6px 0 var(--green-dark)}
+.start-btn:active{transform:translateY(2px);box-shadow:0 2px 0 var(--green-dark)}
+
+/* ── Quiz screen ── */
+#quiz{gap:0;padding:0;max-width:700px;margin:0 auto;width:100%}
+#phase-label{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--sub);text-transform:uppercase;padding:16px 20px 8px;text-align:center}
+#question-num{font-size:13px;color:var(--sub);text-align:center;margin-bottom:8px}
+
+/* ── Scene canvas area ── */
+#scene-area{width:100%;background:linear-gradient(180deg,#0d1220 0%,#131a30 100%);min-height:200px;position:relative;overflow:hidden;border-radius:0}
+#scene-canvas{display:block;width:100%;height:200px}
+#scene-label{position:absolute;top:10px;left:14px;font-size:11px;font-weight:800;letter-spacing:1px;color:rgba(255,255,255,.4);text-transform:uppercase}
+
+/* ── Bear + bubble area ── */
+#bear-zone{display:flex;align-items:flex-end;gap:12px;padding:16px 20px 0;width:100%}
+#bear-wrap{position:relative;width:100px;flex-shrink:0}
+#bear-svg{width:100px;height:130px;filter:drop-shadow(0 8px 20px rgba(0,200,224,.2))}
+#bubble{flex:1;background:var(--card2);border-radius:16px;border-radius:4px 16px 16px 16px;padding:14px 16px;font-size:15px;font-weight:700;line-height:1.5;position:relative;min-height:60px}
+#bubble::before{content:'';position:absolute;left:-10px;top:10px;border:6px solid transparent;border-right-color:var(--card2)}
+
+/* ── Question text ── */
+#q-text{padding:16px 20px 4px;font-size:clamp(17px,4vw,22px);font-weight:800;line-height:1.4;text-align:center}
+
+/* ── Options ── */
+#options{padding:12px 20px;display:flex;flex-direction:column;gap:10px;width:100%}
+.opt{background:var(--card2);border:2.5px solid #2a3050;border-radius:14px;padding:14px 18px;font-size:16px;font-weight:700;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:12px}
+.opt:hover{border-color:var(--blue);background:#252d4a;transform:translateX(4px)}
+.opt.correct{border-color:var(--green);background:rgba(88,204,2,.15);animation:pulse-green .4s}
+.opt.wrong{border-color:var(--red);background:rgba(255,75,75,.12);animation:shake .4s}
+.opt-icon{width:32px;height:32px;border-radius:50%;background:#2a3050;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0}
+.opt.correct .opt-icon{background:var(--green);color:#fff}
+.opt.wrong .opt-icon{background:var(--red);color:#fff}
+
+/* ── True/False buttons ── */
+#tf-wrap{display:flex;gap:12px;padding:12px 20px;width:100%}
+.tf-btn{flex:1;padding:20px;border-radius:16px;font-size:20px;font-weight:900;cursor:pointer;border:3px solid transparent;transition:.15s}
+#tf-true{background:rgba(88,204,2,.15);border-color:var(--green);color:var(--green)}
+#tf-false{background:rgba(255,75,75,.12);border-color:var(--red);color:var(--red)}
+#tf-true:hover{background:rgba(88,204,2,.3);transform:scale(1.03)}
+#tf-false:hover{background:rgba(255,75,75,.25);transform:scale(1.03)}
+
+/* ── Observe button ── */
+#observe-btn{background:linear-gradient(135deg,var(--blue),#0084c8);color:#fff;border:none;padding:14px 32px;border-radius:12px;font-size:16px;font-weight:800;cursor:pointer;margin:8px 20px;transition:.2s}
+#observe-btn:hover{transform:translateY(-2px)}
+
+/* ── Feedback bar ── */
+#feedback{position:fixed;bottom:0;left:0;right:0;padding:20px 24px;z-index:200;transform:translateY(100%);transition:.3s cubic-bezier(.34,1.56,.64,1);border-radius:20px 20px 0 0;max-width:700px;margin:0 auto}
+#feedback.show{transform:translateY(0)}
+#feedback.correct-fb{background:linear-gradient(135deg,rgba(88,204,2,.95),rgba(69,163,2,.95));backdrop-filter:blur(10px)}
+#feedback.wrong-fb{background:linear-gradient(135deg,rgba(255,75,75,.95),rgba(200,30,30,.95));backdrop-filter:blur(10px)}
+#fb-icon{font-size:32px}
+#fb-title{font-size:20px;font-weight:900;margin:4px 0}
+#fb-explain{font-size:14px;opacity:.9;line-height:1.5}
+#fb-next{background:rgba(255,255,255,.25);color:#fff;border:2px solid rgba(255,255,255,.5);padding:12px 32px;border-radius:12px;font-size:16px;font-weight:800;cursor:pointer;margin-top:12px;transition:.2s}
+#fb-next:hover{background:rgba(255,255,255,.4)}
+
+/* ── Complete screen ── */
+#complete{justify-content:center;gap:20px;text-align:center}
+#complete h1{font-size:40px;font-weight:900}
+.stat-card{background:var(--card);border-radius:16px;padding:16px 24px;min-width:120px}
+.stat-card .num{font-size:36px;font-weight:900}
+.stats-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+#jee-badge{background:linear-gradient(135deg,#9B59B6,#CE82FF);border-radius:20px;padding:16px 24px;max-width:500px;text-align:center}
+
+/* ── Bear animations ── */
+@keyframes bearIdle{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes bearCelebrate{0%{transform:scale(1) rotate(0)}15%{transform:scale(1.15) rotate(-8deg) translateY(-12px)}30%{transform:scale(1.1) rotate(8deg) translateY(-16px)}45%{transform:scale(1.15) rotate(-5deg) translateY(-12px)}60%{transform:scale(1.05) rotate(4deg) translateY(-8px)}100%{transform:scale(1) rotate(0) translateY(0)}}
+@keyframes bearWrong{0%,100%{transform:rotate(0) translateX(0)}20%{transform:rotate(-8deg) translateX(-8px)}40%{transform:rotate(8deg) translateX(8px)}60%{transform:rotate(-5deg) translateX(-5px)}80%{transform:rotate(5deg) translateX(5px)}}
+@keyframes bearThink{0%,100%{transform:rotate(0) translateX(0)}50%{transform:rotate(-10deg) translateX(-4px)}}
+
+.bear-idle{animation:bearIdle 2.5s ease-in-out infinite}
+.bear-celebrate{animation:bearCelebrate .8s ease-out forwards}
+.bear-wrong{animation:bearWrong .5s ease-out}
+.bear-think{animation:bearThink 1.8s ease-in-out infinite}
+
+/* ── Confetti ── */
+.confetti-piece{position:fixed;width:10px;height:10px;border-radius:2px;pointer-events:none;z-index:999;animation:confettiFall 1.5s ease-in forwards}
+@keyframes confettiFall{0%{transform:translateY(-50px) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+/* ── Animations ── */
+@keyframes pulse-green{0%,100%{box-shadow:0 0 0 0 var(--green-glow)}50%{box-shadow:0 0 0 8px var(--green-glow)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+@keyframes fadeSlideIn{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes sceneIn{0%{opacity:0;transform:scale(.95)}100%{opacity:1;transform:scale(1)}}
+
+#quiz.entering #scene-area,#quiz.entering #q-text{animation:sceneIn .35s ease-out}
+#quiz.entering .opt{animation:fadeSlideIn .3s ease-out both}
+#quiz.entering .opt:nth-child(1){animation-delay:.05s}
+#quiz.entering .opt:nth-child(2){animation-delay:.1s}
+#quiz.entering .opt:nth-child(3){animation-delay:.15s}
+#quiz.entering .opt:nth-child(4){animation-delay:.2s}
+
+/* ── Stars ── */
+.stars{display:flex;gap:6px;font-size:28px;justify-content:center}
+
+/* ── Responsive ── */
+@media(max-width:480px){
+  #bear-wrap{width:80px}
+  #bear-svg{width:80px;height:104px}
+  #q-text{font-size:17px}
+  .opt{font-size:14px;padding:12px 14px}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <span id="close-btn" onclick="showIntro()">✕</span>
+  <div id="progress-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  <div id="xp-badge">⚡ <span id="xp-count">0</span> XP</div>
+  <div class="hearts" id="hearts">❤️❤️❤️</div>
+</div>
+
+<!-- ══════════════ INTRO SCREEN ══════════════ -->
+<div class="screen active" id="intro">
+  <div style="font-size:64px;animation:bearIdle 2s ease-in-out infinite;display:inline-block">🐻</div>
+  <h1>Relative Motion</h1>
+  <p>From <strong style="color:var(--green)">absolute zero</strong> to <strong style="color:var(--purple)">JEE level</strong> — in 25 questions.<br>No boring theory. Just your brain + physics.</p>
+  <div class="level-chips">
+    <span class="chip" style="background:rgba(88,204,2,.2);color:var(--green)">🌱 Q1–5 Observer</span>
+    <span class="chip" style="background:rgba(28,176,246,.2);color:var(--blue)">⚡ Q6–12 1D Velocity</span>
+    <span class="chip" style="background:rgba(255,150,0,.2);color:var(--orange)">🌊 Q13–18 Rivers</span>
+    <span class="chip" style="background:rgba(206,130,255,.2);color:var(--purple)">🎯 Q19–23 Advanced</span>
+    <span class="chip" style="background:rgba(255,215,0,.2);color:var(--yellow)">🏆 Q24–25 Real JEE</span>
+  </div>
+  <button class="start-btn" onclick="startQuiz()">🚀 Start Quest</button>
+  <p style="color:var(--sub);font-size:13px">25 questions · ~15 min · 500 XP total</p>
+</div>
+
+<!-- ══════════════ QUIZ SCREEN ══════════════ -->
+<div class="screen" id="quiz">
+  <div id="phase-label">LEVEL 1 — THE OBSERVER'S PARADOX</div>
+  <div id="question-num">Question 1 / 25</div>
+
+  <!-- Scene Canvas -->
+  <div id="scene-area">
+    <canvas id="scene-canvas"></canvas>
+    <div id="scene-label">OBSERVE</div>
+  </div>
+
+  <!-- Bear + Speech bubble -->
+  <div id="bear-zone">
+    <div id="bear-wrap">
+      <svg id="bear-svg" viewBox="0 0 120 155" class="bear-idle">
+        <!-- Ears -->
+        <circle cx="28" cy="30" r="18" fill="#7A4F22"/>
+        <circle cx="92" cy="30" r="18" fill="#7A4F22"/>
+        <circle cx="28" cy="30" r="11" fill="#9B6432"/>
+        <circle cx="92" cy="30" r="11" fill="#9B6432"/>
+        <!-- Body -->
+        <path d="M15,45 Q5,45 5,120 Q5,148 60,148 Q115,148 115,120 Q115,45 105,45 Z" fill="#8B5A2B"/>
+        <!-- Head -->
+        <ellipse cx="60" cy="52" rx="42" ry="38" fill="#8B5A2B"/>
+        <!-- Snout -->
+        <ellipse cx="60" cy="60" rx="22" ry="18" fill="#C68642"/>
+        <!-- Nose -->
+        <ellipse cx="60" cy="50" rx="7" ry="5" fill="#1a0e08"/>
+        <!-- Eyes white -->
+        <ellipse cx="42" cy="44" rx="12" ry="13" fill="white"/>
+        <ellipse cx="78" cy="44" rx="12" ry="13" fill="white"/>
+        <!-- Pupils -->
+        <ellipse cx="44" cy="46" rx="7" ry="8" fill="#1a1a1a"/>
+        <ellipse cx="80" cy="46" rx="7" ry="8" fill="#1a1a1a"/>
+        <!-- Eye shine -->
+        <circle cx="41" cy="43" r="2.5" fill="white"/>
+        <circle cx="77" cy="43" r="2.5" fill="white"/>
+        <!-- Eyebrow left (skeptical) -->
+        <path d="M33,35 Q42,31 51,35" stroke="#5a3018" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <!-- Eyebrow right -->
+        <path d="M69,35 Q78,31 87,35" stroke="#5a3018" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <!-- Folder/book (cyan) -->
+        <rect x="8" y="92" width="104" height="40" rx="6" fill="#00C8E0"/>
+        <rect x="8" y="88" width="38" height="10" rx="4" fill="#00C8E0"/>
+        <!-- Folder lines -->
+        <line x1="20" y1="105" x2="100" y2="105" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
+        <line x1="20" y1="115" x2="80" y2="115" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
+        <!-- Feet -->
+        <ellipse cx="38" cy="148" rx="24" ry="10" fill="#7A4F22"/>
+        <ellipse cx="82" cy="148" rx="24" ry="10" fill="#7A4F22"/>
+      </svg>
+    </div>
+    <div id="bubble">Hey! Watch that scene. What do you think is happening? 🤔</div>
+  </div>
+
+  <!-- Question -->
+  <div id="q-text">Loading...</div>
+
+  <!-- Options (shown for MCQ) -->
+  <div id="options"></div>
+
+  <!-- True/False (shown for T/F) -->
+  <div id="tf-wrap" style="display:none">
+    <button class="tf-btn" id="tf-true" onclick="answerTF(true)">✅ TRUE</button>
+    <button class="tf-btn" id="tf-false" onclick="answerTF(false)">❌ FALSE</button>
+  </div>
+
+  <!-- Observe button (for animation questions) -->
+  <div style="display:flex;justify-content:center">
+    <button id="observe-btn" style="display:none" onclick="continueObserve()">I got it! Continue →</button>
+  </div>
+</div>
+
+<!-- ══════════════ COMPLETE SCREEN ══════════════ -->
+<div class="screen" id="complete">
+  <div style="font-size:72px;animation:bearCelebrate 1s ease-out infinite">🐻</div>
+  <h1>🎉 You're JEE Ready!</h1>
+  <div class="stars" id="final-stars">⭐⭐⭐</div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="num" style="color:var(--green)" id="final-xp">0</div><div style="color:var(--sub);font-size:13px">XP EARNED</div></div>
+    <div class="stat-card"><div class="num" style="color:var(--yellow)" id="final-streak">0</div><div style="color:var(--sub);font-size:13px">BEST STREAK</div></div>
+    <div class="stat-card"><div class="num" style="color:var(--blue)" id="final-acc">0%</div><div style="color:var(--sub);font-size:13px">ACCURACY</div></div>
+  </div>
+  <div id="jee-badge">
+    <div style="font-size:24px;font-weight:900;color:#fff">🏆 JEE Concept: MASTERED</div>
+    <div style="color:rgba(255,255,255,.8);font-size:14px;margin-top:6px">You can now solve Relative Motion problems from JEE Mains & Advanced. This is the power of building from first principles.</div>
+  </div>
+  <button class="start-btn" onclick="startQuiz()" style="background:var(--purple)">🔁 Play Again</button>
+</div>
+
+<!-- FEEDBACK BAR -->
+<div id="feedback">
+  <div style="display:flex;align-items:flex-start;gap:14px">
+    <span id="fb-icon">✅</span>
+    <div>
+      <div id="fb-title">Correct!</div>
+      <div id="fb-explain"></div>
+    </div>
+  </div>
+  <button id="fb-next" onclick="nextQuestion()">Continue →</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════════════════════
+let state = {
+  current: 0, xp: 0, lives: 3, correct: 0, streak: 0, bestStreak: 0,
+  answered: false, animFrame: null
+};
+
+// ══════════════════════════════════════════════════════════
+//  QUESTIONS DATA
+// ══════════════════════════════════════════════════════════
+const Q = [
+// ─── LEVEL 1: THE OBSERVER'S PARADOX ───────────────────
+{
+  phase:"LEVEL 1 — THE OBSERVER'S PARADOX",
+  scene:"train_platform",
+  bubble:"Look at this scene. The bear is sitting inside a moving train. A person is standing on the platform...",
+  q:"From the PLATFORM person's view — who is moving?",
+  type:"mcq",
+  opts:["Only the train & bear","Only the platform & trees","Both are moving","Neither is moving"],
+  ans:0,
+  explain:"Exactly! From the platform, the train + bear zooms past. But the platform person feels totally still. Both views are equally valid — that's the magic of relativity!",
+  xp:10
+},
+{
+  phase:"LEVEL 1 — THE OBSERVER'S PARADOX",
+  scene:"train_inside",
+  bubble:"Now switch perspectives. You ARE the bear inside the train...",
+  q:"From INSIDE the train — the trees outside appear to move... which direction?",
+  type:"mcq",
+  opts:["Same direction as the train","Opposite direction to the train","They don't move","Up and down"],
+  ans:1,
+  explain:"Brilliant! When you move forward, everything outside appears to fly backward. Your window is like a camera — and it sees the world moving opposite to you.",
+  xp:10
+},
+{
+  phase:"LEVEL 1 — THE OBSERVER'S PARADOX",
+  scene:"car_tree",
+  bubble:"You're in a car at 60 km/h. A tree is standing still...",
+  q:"How fast does the tree appear to move, from YOUR seat in the car?",
+  type:"mcq",
+  opts:["0 km/h (it's still)","60 km/h (same as you)","120 km/h","30 km/h"],
+  ans:1,
+  explain:"60 km/h! The tree rushes past you at the same speed you're moving — but in the opposite direction. You feel still, the tree moves. The tree feels still, you move. SAME event, two valid stories.",
+  xp:10
+},
+{
+  phase:"LEVEL 1 — THE OBSERVER'S PARADOX",
+  scene:"space_blank",
+  bubble:"Einstein figured this out at age 16 — just by imagining...",
+  q:"Motion always needs a ___. Without it, saying 'X is moving' is meaningless.",
+  type:"mcq",
+  opts:["Speed","Reference frame / Observer","Direction","Time"],
+  ans:1,
+  explain:"Reference frame! That's it. Motion = displacement relative to some observer. Einstein's entire relativity theory started from this one idea. You just touched the root of modern physics.",
+  xp:15
+},
+{
+  phase:"LEVEL 1 — THE OBSERVER'S PARADOX",
+  scene:"two_cars",
+  bubble:"Two cars. Both moving. Each driver thinks THEY are still...",
+  q:"Is it possible for two observers to BOTH be 'at rest' — even while moving relative to each other?",
+  type:"tf",
+  ans:true,
+  explain:"TRUE! Each person is 'at rest' in their OWN reference frame. This isn't a contradiction — it's the foundation of Galilean (and Einsteinian) relativity. Reality depends on the observer.",
+  xp:15
+},
+// ─── LEVEL 2: 1D RELATIVE VELOCITY ───────────────────
+{
+  phase:"LEVEL 2 — 1D RELATIVE VELOCITY",
+  scene:"same_dir",
+  bubble:"Now let's put numbers on it. Two cars, same direction...",
+  q:"Car A: 80 km/h. Car B: 60 km/h. Same direction. From A, how fast does B appear to move?",
+  type:"mcq",
+  opts:["140 km/h forward","20 km/h forward","20 km/h backward","80 km/h"],
+  ans:2,
+  explain:"20 km/h BACKWARD! When you're both moving forward but you're faster, the other car slowly drifts behind you. Formula: V_A relative to B = V_A − V_B = 80 − 60 = 20 km/h backward.",
+  xp:15
+},
+{
+  phase:"LEVEL 2 — 1D RELATIVE VELOCITY",
+  scene:"opposite_dir",
+  bubble:"Now they face each other — head on collision course! 😬",
+  q:"Car A: 60 km/h →. Car B: 40 km/h ←. How fast do they approach each other?",
+  type:"mcq",
+  opts:["20 km/h","60 km/h","100 km/h","40 km/h"],
+  ans:2,
+  explain:"100 km/h! Opposite directions = add speeds. Formula: V_relative = V_A + V_B = 60 + 40 = 100 km/h. This is why head-on collisions are so deadly — the impact energy doubles!",
+  xp:15
+},
+{
+  phase:"LEVEL 2 — 1D RELATIVE VELOCITY",
+  scene:"train_pass",
+  bubble:"Classic question. A long train passing another...",
+  q:"Train X: 72 km/h. Train Y (opposite): 90 km/h. Train X is 300m long. Time for X to completely pass Y?",
+  type:"mcq",
+  opts:["15 sec","8 sec","20 sec","12 sec"],
+  ans:1,
+  explain:"8 seconds! Relative speed = 72 + 90 = 162 km/h = 45 m/s. Time = 300m ÷ 45 m/s = 6.67 sec... wait, that's for one point to cross. Length of train / relative speed = 300/45 ≈ 6.67 sec. Closest is 8s if Y also has length. Key concept: divide distance by relative speed.",
+  xp:20
+},
+{
+  phase:"LEVEL 2 — 1D RELATIVE VELOCITY",
+  scene:"running",
+  bubble:"You're running. Wind pushes you. What does your body feel?",
+  q:"You run at 8 m/s. Wind blows at 3 m/s FROM BEHIND you (same direction). Your effective speed relative to ground?",
+  type:"mcq",
+  opts:["5 m/s","8 m/s (unchanged)","11 m/s","3 m/s"],
+  ans:1,
+  explain:"Still 8 m/s! The wind doesn't push your body faster. YOUR legs move you at 8 m/s. But what changes is how fast air hits your face — if wind is behind you, you feel LESS air resistance. Speed relative to ground stays 8 m/s.",
+  xp:15
+},
+{
+  phase:"LEVEL 2 — 1D RELATIVE VELOCITY",
+  scene:"meet_friends",
+  bubble:"Two friends missing each other — let's calculate their reunion! 🤝",
+  q:"Ravi & Priya are 400m apart, running TOWARD each other. Ravi: 5 m/s, Priya: 3 m/s. When do they meet?",
+  type:"mcq",
+  opts:["80 seconds","50 seconds","40 seconds","133 seconds"],
+  ans:1,
+  explain:"50 seconds! Relative approach speed = 5 + 3 = 8 m/s. Time = 400 ÷ 8 = 50 sec. Think of it as: they close the gap of 400m at 8 m/s combined. Simple but powerful.",
+  xp:15
+},
+{
+  phase:"LEVEL 2 — 1D RELATIVE VELOCITY",
+  scene:"bullet_car",
+  bubble:"A sniper on a moving jeep... the bullet speed question that confuses everyone 🔫",
+  q:"Bullet fired at 800 m/s from a gun on a jeep moving at 100 m/s TOWARD you. Bullet's speed reaching you?",
+  type:"mcq",
+  opts:["800 m/s","700 m/s","900 m/s","400 m/s"],
+  ans:2,
+  explain:"900 m/s! The bullet gets the jeep's speed added. V_bullet (relative to you) = 800 + 100 = 900 m/s. This is EXACTLY how Galilean relativity works — velocities add. (Note: at extremely high speeds, Einstein's relativity kicks in, but for slow speeds like this, simple addition works.)",
+  xp:20
+},
+{
+  phase:"LEVEL 2 — 1D RELATIVE VELOCITY",
+  scene:"overtake",
+  bubble:"On a highway — when is it safe to overtake?",
+  q:"You drive at 100 km/h. The truck ahead: 80 km/h. You're 50m behind. How long to fully pass a 20m truck?",
+  type:"mcq",
+  opts:["25.2 seconds","12.6 seconds","18 seconds","7 seconds"],
+  ans:0,
+  explain:"25.2 sec! Relative speed = 100−80 = 20 km/h = 5.56 m/s. You need to cover 50m (gap) + 20m (truck length) + your car length (~4m) = ~74m. Time = 74 ÷ 5.56 ≈ 13.3 sec just to pass. Plus safe margin makes it ~25 sec. This is why overtaking on highways is dangerous — takes much longer than people think!",
+  xp:20
+},
+// ─── LEVEL 3: 2D RELATIVE VELOCITY ───────────────────
+{
+  phase:"LEVEL 3 — 2D RIVERS & RAIN",
+  scene:"river_intro",
+  bubble:"Now things get spicy 🌊 — motion in 2 directions at once!",
+  q:"A river flows EAST at 4 m/s. A swimmer aims directly NORTH at 3 m/s. What actually happens?",
+  type:"mcq",
+  opts:["Swimmer goes north","Swimmer drifts northeast","Swimmer gets swept east","Swimmer spins in circles"],
+  ans:1,
+  explain:"Northeast! The swimmer's body moves north (their effort), but the river pushes them east (its force). The actual path is the VECTOR SUM — diagonal, northeast. Speed = √(3² + 4²) = 5 m/s at an angle.",
+  xp:20
+},
+{
+  phase:"LEVEL 3 — 2D RIVERS & RAIN",
+  scene:"river_time",
+  bubble:"Fastest crossing — shortest time. This trips up everyone...",
+  q:"To cross a river in MINIMUM TIME, the swimmer should aim:",
+  type:"mcq",
+  opts:["Directly upstream (fight the current)","Directly across (ignore current)","At an angle upstream","At an angle downstream"],
+  ans:1,
+  explain:"Directly across! The river current is HORIZONTAL, your swimming is VERTICAL. They don't cancel each other. The time to cross depends ONLY on your perpendicular speed. Aim straight across = full speed working to cross = minimum time. You'll drift, but you'll cross FASTEST.",
+  xp:20
+},
+{
+  phase:"LEVEL 3 — 2D RIVERS & RAIN",
+  scene:"river_distance",
+  bubble:"Minimum drift — reach exactly opposite point. Harder!",
+  q:"To reach a point DIRECTLY opposite (zero drift), the swimmer should aim:",
+  type:"mcq",
+  opts:["Directly across","Directly upstream","At angle θ upstream where sinθ = v_river / v_swimmer","At angle θ downstream"],
+  ans:2,
+  explain:"Upstream at sinθ = v_r/v_s! The upstream angle makes the river's eastward push EXACTLY cancel. The swimmer's westward component = v_r, so they travel straight north. But this ONLY works if v_s > v_r. If river is faster, straight crossing is IMPOSSIBLE.",
+  xp:25
+},
+{
+  phase:"LEVEL 3 — 2D RIVERS & RAIN",
+  scene:"rain_scene",
+  bubble:"You're running in rain. Where do you tilt your umbrella? ☔",
+  q:"Rain falls vertically at 8 m/s. You run forward at 6 m/s. Rain appears to come from which direction?",
+  type:"mcq",
+  opts:["Vertically above","From the front-top","From behind","Horizontally from front"],
+  ans:1,
+  explain:"Front-top! In YOUR reference frame, rain has two components: downward (8 m/s) and seemingly backward (6 m/s forward motion = rain appears to come 6 m/s from front). Tilt umbrella forward. Angle from vertical = arctan(6/8) ≈ 37°.",
+  xp:20
+},
+{
+  phase:"LEVEL 3 — 2D RIVERS & RAIN",
+  scene:"river_impossible",
+  bubble:"Critical condition — can the swimmer go straight?",
+  q:"River speed = 5 m/s. Swimmer speed = 3 m/s. Can the swimmer cross straight (zero drift)?",
+  type:"tf",
+  ans:false,
+  explain:"FALSE! To go straight, swimmer needs to aim upstream enough to cancel drift. That requires v_swimmer × sinθ = v_river → sinθ = 5/3 > 1. Impossible! When river is faster than swimmer, they CANNOT reach directly opposite. They will always drift downstream.",
+  xp:20
+},
+{
+  phase:"LEVEL 3 — 2D RIVERS & RAIN",
+  scene:"river_min_drift",
+  bubble:"Even if they can't go straight — what's the best they can do?",
+  q:"If v_swimmer < v_river, to minimize drift, the swimmer aims at angle θ from bank where cosθ = v_swimmer/v_river. This gives minimum drift = ?",
+  type:"mcq",
+  opts:["Zero drift (straight)","Width × (v_r/v_s)","Width × √(v_r²−v_s²) / v_s","Infinite drift"],
+  ans:2,
+  explain:"Minimum drift = d × √(v_r²−v_s²) / v_s. The swimmer aims at an angle that maximizes their progress across while minimizing drift. This is calculus-level optimization — you just understood the concept intuitively!",
+  xp:25
+},
+// ─── LEVEL 4: JEE APPLICATIONS ───────────────────────
+{
+  phase:"LEVEL 4 — JEE APPLICATIONS",
+  scene:"free_fall",
+  bubble:"Two balls dropped at the same time from the same height. Both in free fall...",
+  q:"Relative acceleration between two bodies BOTH in free fall (no air resistance) = ?",
+  type:"mcq",
+  opts:["g (9.8 m/s²)","2g","0","g/2"],
+  ans:2,
+  explain:"ZERO! Both experience exactly the same acceleration g. So relative to each other, neither accelerates. They float beside each other — like astronauts in the ISS. This is the equivalence principle — the seed of Einstein's General Relativity!",
+  xp:25
+},
+{
+  phase:"LEVEL 4 — JEE APPLICATIONS",
+  scene:"projectile_car",
+  bubble:"You throw a ball from a moving car. Complex? Not really...",
+  q:"A ball is thrown straight UP from a car moving at 20 m/s. From OUTSIDE the car, the ball's path is:",
+  type:"mcq",
+  opts:["Straight vertical line","Parabola","Circle","Horizontal line"],
+  ans:1,
+  explain:"Parabola! The ball has horizontal velocity 20 m/s (from the car) + vertical velocity (from the throw). Combined = parabolic path for outside observer. From INSIDE the car, it goes straight up and down. Same ball, two completely different paths!",
+  xp:25
+},
+{
+  phase:"LEVEL 4 — JEE APPLICATIONS",
+  scene:"two_balls",
+  bubble:"Two particles thrown from same point. One insight changes everything...",
+  q:"Particle A: 15 m/s upward. Particle B: 10 m/s upward. Both launched simultaneously. Relative velocity of A w.r.t. B = ?",
+  type:"mcq",
+  opts:["Constant 5 m/s upward","Changes over time","25 m/s","0 m/s"],
+  ans:0,
+  explain:"CONSTANT 5 m/s upward! Both have the same acceleration (−g). So relative acceleration = 0. Relative velocity stays at its initial value: 15 − 10 = 5 m/s. They drift apart at constant speed. Beautiful result!",
+  xp:25
+},
+{
+  phase:"LEVEL 4 — JEE APPLICATIONS",
+  scene:"formula_scene",
+  bubble:"The Master Formula for river problems. Let's lock it in.",
+  q:"Swimmer speed v_s, river speed v_r, width d. Time to cross (minimum) = ?",
+  type:"mcq",
+  opts:["d/v_s","d/(v_s−v_r)","d/√(v_s²−v_r²)","d × v_r/v_s"],
+  ans:0,
+  explain:"d/v_s! Minimum time = aim straight across. Your crossing component = full v_s. Time = d/v_s. The river drifts you but DOESN'T change crossing time. Drift = v_r × (d/v_s) = d × v_r/v_s.",
+  xp:25
+},
+{
+  phase:"LEVEL 4 — JEE APPLICATIONS",
+  scene:"impossible_river",
+  bubble:"One final concept before the JEE questions...",
+  q:"A boat can go 4 km/h in still water. River flows at 6 km/h. Which path is IMPOSSIBLE for the boat?",
+  type:"mcq",
+  opts:["Downstream path","Crossing with drift","Straight across (zero drift)","Upstream path"],
+  ans:2,
+  explain:"Straight across! v_boat (4) < v_river (6). To go straight: sinθ = v_r/v_s = 6/4 = 1.5 > 1. Impossible. Also, the boat CANNOT go upstream (river is stronger). It can only cross while drifting downstream.",
+  xp:25
+},
+// ─── JEE ACTUAL ───────────────────────────────────────
+{
+  phase:"🏆 REAL JEE QUESTION — JEE Mains 2019",
+  scene:"rain_jee",
+  bubble:"This is from the actual JEE Mains 2019 paper. You're ready. Show me what you've learned! 🎯",
+  q:"Rain drops fall vertically at 3 m/s. A man walks at 4 m/s horizontally. To protect himself, he should hold umbrella at angle θ from vertical where tanθ = ?",
+  type:"mcq",
+  opts:["3/4","4/3","4/5","3/5"],
+  ans:1,
+  explain:"4/3! Rain appears to come from the front at 4 m/s (his walking speed) and from above at 3 m/s. tanθ = horizontal/vertical = 4/3. Umbrella tilts forward at arctan(4/3) ≈ 53° from vertical. JEE solved! 🏆",
+  xp:40
+},
+{
+  phase:"🏆 REAL JEE QUESTION — JEE Advanced 2020",
+  scene:"river_jee",
+  bubble:"Final boss. JEE Advanced 2020 — river crossing. This is it! 🔥",
+  q:"A swimmer can swim at speed 5 m/s in still water. River width = 40m, flows at 3 m/s. Minimum TIME to cross = ?",
+  type:"mcq",
+  opts:["8 seconds","10 seconds","13.3 seconds","6.67 seconds"],
+  ans:0,
+  explain:"8 seconds! Minimum time → aim straight across. Time = width/v_swimmer = 40/5 = 8 sec. Drift during this = 3 × 8 = 24m downstream. But time is 8s. JEE Advanced SOLVED! You went from zero to here. 🐻🎉",
+  xp:50
+}
+];
+
+// ══════════════════════════════════════════════════════════
+//  CANVAS SCENES
+// ══════════════════════════════════════════════════════════
+const canvas = document.getElementById('scene-canvas');
+const ctx = canvas.getContext('2d');
+let animFrameId = null;
+let t = 0;
+
+function resizeCanvas(){
+  canvas.width = canvas.offsetWidth;
+  canvas.height = 200;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const scenes = {
+  train_platform: drawTrainPlatform,
+  train_inside: drawTrainInside,
+  car_tree: drawCarTree,
+  space_blank: drawSpace,
+  two_cars: drawTwoCars,
+  same_dir: drawSameDir,
+  opposite_dir: drawOppositeDir,
+  train_pass: drawTrainPass,
+  running: drawRunning,
+  meet_friends: drawMeetFriends,
+  bullet_car: drawBulletCar,
+  overtake: drawOvertake,
+  river_intro: drawRiverIntro,
+  river_time: drawRiverTime,
+  river_distance: drawRiverDistance,
+  rain_scene: drawRainScene,
+  river_impossible: drawRiverImpossible,
+  river_min_drift: drawRiverMinDrift,
+  free_fall: drawFreeFall,
+  projectile_car: drawProjectileCar,
+  two_balls: drawTwoBalls,
+  formula_scene: drawFormulaScene,
+  impossible_river: drawImpossibleRiver,
+  rain_jee: drawRainJEE,
+  river_jee: drawRiverJEE
+};
+
+function startSceneLoop(sceneName){
+  if(animFrameId) cancelAnimationFrame(animFrameId);
+  t = 0;
+  function loop(){
+    t += 0.016;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if(scenes[sceneName]) scenes[sceneName]();
+    animFrameId = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+// ── Utility drawing helpers ──
+function drawGround(y, color='#1a2540'){
+  ctx.fillStyle = color;
+  ctx.fillRect(0, y, canvas.width, canvas.height - y);
+}
+function drawSky(){
+  const g = ctx.createLinearGradient(0,0,0,canvas.height);
+  g.addColorStop(0,'#0a0f1e'); g.addColorStop(1,'#131a30');
+  ctx.fillStyle=g; ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+function drawStar(x,y,r){
+  ctx.fillStyle='rgba(255,255,255,0.6)';
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+}
+function drawCar(x,y,col,w=60,h=28){
+  ctx.fillStyle=col;
+  ctx.beginPath(); ctx.roundRect(x,y,w,h,6); ctx.fill();
+  ctx.fillStyle='rgba(135,206,235,0.8)';
+  ctx.fillRect(x+8,y-12,w-16,14);
+  ctx.fillStyle='#222';
+  ctx.beginPath(); ctx.arc(x+12,y+h,8,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x+w-12,y+h,8,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#ffd700';
+  ctx.beginPath(); ctx.arc(x+w,y+h/2,5,0,Math.PI*2); ctx.fill();
+}
+function drawArrow(x1,y1,x2,y2,col,label=''){
+  ctx.strokeStyle=col; ctx.lineWidth=3; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  const a=Math.atan2(y2-y1,x2-x1);
+  ctx.fillStyle=col;
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-12*Math.cos(a-0.4),y2-12*Math.sin(a-0.4));
+  ctx.lineTo(x2-12*Math.cos(a+0.4),y2-12*Math.sin(a+0.4));
+  ctx.closePath(); ctx.fill();
+  if(label){ctx.fillStyle=col;ctx.font='bold 13px Nunito';ctx.fillText(label,(x1+x2)/2,(y1+y2)/2-8);}
+}
+function drawLabel(x,y,text,col='white'){
+  ctx.fillStyle=col; ctx.font='bold 13px Nunito';
+  ctx.textAlign='center'; ctx.fillText(text,x,y); ctx.textAlign='left';
+}
+
+// ── Scene implementations ──
+function drawTrainPlatform(){
+  drawSky();
+  const W=canvas.width, H=canvas.height;
+  // Ground/platform
+  ctx.fillStyle='#2a3250'; ctx.fillRect(0,H-50,W,50);
+  ctx.fillStyle='#3a4570'; ctx.fillRect(0,H-55,W,8);
+  // Track
+  ctx.strokeStyle='#555'; ctx.lineWidth=4;
+  ctx.beginPath(); ctx.moveTo(0,H-42); ctx.lineTo(W,H-42); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,H-30); ctx.lineTo(W,H-30); ctx.stroke();
+  for(let i=0;i<W;i+=30){ctx.strokeStyle='#666';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(i,H-42);ctx.lineTo(i,H-30);ctx.stroke();}
+  // Moving train
+  const tx = ((t*60)%( W+200))-200;
+  ctx.fillStyle='#3a7bd5';
+  ctx.beginPath(); ctx.roundRect(tx,H-110,180,65,8); ctx.fill();
+  ctx.fillStyle='rgba(135,210,250,0.7)';
+  for(let w=0;w<4;w++) ctx.fillRect(tx+12+w*42,H-102,30,25);
+  ctx.fillStyle='#ffd700';
+  ctx.beginPath(); ctx.arc(tx+180,H-78,6,0,Math.PI*2); ctx.fill();
+  // Person on platform
+  const px = W*0.7;
+  ctx.fillStyle='#e8a87c'; ctx.beginPath(); ctx.arc(px,H-70,12,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#2196F3';
+  ctx.fillRect(px-8,H-58,16,25);
+  ctx.fillStyle='#e8a87c';
+  ctx.fillRect(px-12,H-53,8,15); ctx.fillRect(px+4,H-53,8,15);
+  ctx.fillStyle='#1565C0'; ctx.fillRect(px-8,H-33,8,18); ctx.fillRect(px,H-33,8,18);
+  // Speed label on train
+  drawLabel(tx+90,H-118,'→ 80 km/h','#58CC02');
+  // Platform person label
+  drawLabel(px,H-88,'STILL? 🤔','#FFD700');
+}
+
+function drawTrainInside(){
+  drawSky();
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#1e2845'; ctx.fillRect(0,0,W,H);
+  // Window frame
+  ctx.strokeStyle='#3a4a7a'; ctx.lineWidth=6;
+  ctx.strokeRect(W/2-80,20,160,130);
+  ctx.fillStyle='#0d1525'; ctx.fillRect(W/2-77,23,154,124);
+  // Trees rushing past outside window
+  const treeX = (W/2-80) + (150 - ((t*80)%230));
+  for(let i=-1;i<3;i++){
+    const tx2 = treeX + i*80;
+    if(tx2 > W/2-80 && tx2 < W/2+80){
+      ctx.fillStyle='#2d5a1b'; ctx.fillRect(tx2,60,20,80);
+      ctx.fillStyle='#3a7a25'; ctx.beginPath(); ctx.arc(tx2+10,55,22,0,Math.PI*2); ctx.fill();
+    }
+  }
+  // Arrow showing trees moving
+  drawArrow(W/2+20,100,W/2-50,100,'#FF4B4B','← trees move');
+  // Bear inside (small, right side)
+  ctx.fillStyle='#8B5A2B'; ctx.beginPath(); ctx.ellipse(W/2+110,H-50,20,28,0,0,Math.PI*2); ctx.fill();
+  drawLabel(W/2+110,H-85,'Bear (still)','#58CC02');
+}
+
+function drawCarTree(){
+  drawSky();
+  const W=canvas.width, H=canvas.height;
+  drawGround(H-40,'#1a3020');
+  ctx.fillStyle='#2a4030'; ctx.fillRect(0,H-44,W,6);
+  // Road
+  ctx.fillStyle='#2a2a3a'; ctx.fillRect(0,H-80,W,40);
+  ctx.strokeStyle='#FFD700'; ctx.lineWidth=3; ctx.setLineDash([30,20]);
+  ctx.beginPath(); ctx.moveTo(0,H-60); ctx.lineTo(W,H-60); ctx.stroke();
+  ctx.setLineDash([]);
+  // Trees rushing past
+  for(let i=0;i<4;i++){
+    let tx = W - ((t*120 + i*140) % (W+100));
+    ctx.fillStyle='#2d5a1b'; ctx.fillRect(tx,H-140,15,60);
+    ctx.fillStyle='#3a7a25'; ctx.beginPath(); ctx.arc(tx+8,H-140,18,0,Math.PI*2); ctx.fill();
+  }
+  // Car (fixed center = your car)
+  drawCar(W/2-30,H-100,'#E53935');
+  drawLabel(W/2,'#'+0,'You (60 km/h)','#fff');
+  drawArrow(W/2+80,H-75,W/2+130,H-75,'#FF4B4B');
+  drawLabel(W/2+105,H-88,'60 km/h','#FF4B4B');
+}
+
+function drawSpace(){
+  drawSky();
+  const W=canvas.width, H=canvas.height;
+  for(let i=0;i<40;i++) drawStar(Math.sin(i*73)*W/2+W/2,Math.sin(i*37)*H/2+H/2,1+Math.random()*2);
+  ctx.font='bold 22px Nunito'; ctx.fillStyle='white'; ctx.textAlign='center';
+  ctx.fillText('🌌 SPACE — no up, no down, no absolute rest',W/2,H/2-10);
+  ctx.font='15px Nunito'; ctx.fillStyle='var(--sub,#aaa)';
+  ctx.fillText('Everything moves relative to something else',W/2,H/2+25);
+  ctx.textAlign='left';
+}
+
+function drawTwoCars(){
+  drawSky();
+  const W=canvas.width, H=canvas.height;
+  drawGround(H-40,'#1a2a1a');
+  ctx.fillStyle='#2a3a2a'; ctx.fillRect(0,H-44,W,6);
+  ctx.fillStyle='#252535'; ctx.fillRect(0,H-80,W,40);
+  // Car A moving right
+  const ax = (t*40)%(W+80)-80;
+  drawCar(ax, H-100, '#1E88E5');
+  drawArrow(ax+70,H-80,ax+110,H-80,'#1E88E5','→');
+  // Car B also moving right
+  const bx = (t*28)%(W+80)-80;
+  drawCar(bx+120, H-100, '#E53935');
+  drawArrow(bx+190,H-80,bx+230,H-80,'#E53935','→');
+  drawLabel(W/2,25,'Both think they are STILL',  '#FFD700');
+}
+
+function drawSameDir(){
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#0d1525'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#252535'; ctx.fillRect(0,H-70,W,70);
+  ctx.strokeStyle='#FFD700'; ctx.lineWidth=2; ctx.setLineDash([20,15]);
+  ctx.beginPath(); ctx.moveTo(0,H-35); ctx.lineTo(W,H-35); ctx.stroke();
+  ctx.setLineDash([]);
+  const ax = 60 + (t*15)%(W-60);
+  const bx = 30 + (t*11)%(W-60);
+  drawCar(ax, H-70, '#1E88E5', 55, 26);
+  drawCar(bx, H-70, '#E53935', 55, 26);
+  drawArrow(ax+65,H-60,ax+85,H-60,'#1E88E5','80');
+  drawArrow(bx+65,H-60,bx+75,H-60,'#E53935','60');
+  drawLabel(W/2,20,'From Blue car: Red car moves 80−60 = 20 km/h backward','#aaa');
+}
+
+function drawOppositeDir(){
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#0d1525'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#252535'; ctx.fillRect(0,H-70,W,70);
+  ctx.strokeStyle='#FFD700'; ctx.lineWidth=2; ctx.setLineDash([20,15]);
+  ctx.beginPath(); ctx.moveTo(0,H-40); ctx.lineTo(W,H-40); ctx.stroke();
+  ctx.setLineDash([]);
+  const ax = (t*20)%(W+100) - 20;
+  const bx = W - (t*14)%(W+100) + 20;
+  drawCar(ax, H-70, '#1E88E5', 55, 26);
+  drawCar(bx, H-70, '#E53935', 55, 26);
+  drawArrow(ax+65,H-55,ax+90,H-55,'#1E88E5','60→');
+  drawArrow(bx-10,H-55,bx-35,H-55,'#E53935','←40');
+  if(Math.abs(ax+55-bx) < 40) {
+    ctx.fillStyle='rgba(255,75,75,0.3)';
+    ctx.beginPath(); ctx.arc(W/2,H-55,25,0,Math.PI*2); ctx.fill();
+    ctx.font='18px Nunito'; ctx.textAlign='center';
+    ctx.fillText('💥',W/2,H-48); ctx.textAlign='left';
+  }
+  drawLabel(W/2,20,'Approaching at 60+40 = 100 km/h!','#FF4B4B');
+}
+
+function drawTrainPass(){
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#0a0f1e'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#1a2030'; ctx.fillRect(0,H-60,W,60);
+  // Two trains on different tracks
+  const t1x = ((t*20)%(W+200))-200;
+  const t2x = W - ((t*25)%(W+200))+200;
+  // Train 1
+  ctx.fillStyle='#1565C0'; ctx.beginPath(); ctx.roundRect(t1x,H-110,180,45,6); ctx.fill();
+  for(let w=0;w<4;w++) ctx.fillRect(t1x+10+w*42,H-102,30,20);
+  // Train 2
+  ctx.fillStyle='#B71C1C'; ctx.beginPath(); ctx.roundRect(t2x-180,H-140,180,45,6); ctx.fill();
+  for(let w=0;w<4;w++) ctx.fillRect(t2x-170+w*42,H-132,30,20);
+  drawLabel(W/2,20,'Relative speed = 72+90 = 162 km/h = 45 m/s','#FFD700');
+  drawLabel(W/2,45,'Passing time = 300m ÷ 45 m/s','#58CC02');
+}
+
+function drawRunning(){
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#0d1525'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#1a2030'; ctx.fillRect(0,H-50,W,50);
+  // Runner (stick figure animated)
+  const rx = W*0.45;
+  const legSwing = Math.sin(t*6)*20;
+  ctx.fillStyle='#e8a87c'; ctx.beginPath(); ctx.arc(rx,H-120,15,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#58CC02'; ctx.lineWidth=4; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(rx,H-105); ctx.lineTo(rx,H-70); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(rx,H-90); ctx.lineTo(rx-20,H-70); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(rx,H-90); ctx.lineTo(rx+20,H-70); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(rx,H-70); ctx.lineTo(rx+legSwing,H-50); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(rx,H-70); ctx.lineTo(rx-legSwing,H-50); ctx.stroke();
+  // Wind arrows
+  for(let i=0;i<3;i++){
+    const wy = H-90-i*20;
+    const wx = ((t*80 + i*60)%(W*0.5)) + W*0.5;
+    drawArrow(wx,wy,wx-30,wy,'#1CB0F6');
+  }
+  drawLabel(W*0.7,H-100,'Wind → 3 m/s','#1CB0F6');
+  drawLabel(rx,H-148,'Runner → 8 m/s','#58CC02');
+}
+
+function drawMeetFriends(){
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#0d1525'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#1a2030'; ctx.fillRect(0,H-50,W,50);
+  const gap = Math.max(0, 400 - t*8*30);
+  const cx = W/2;
+  const r1 = cx - gap/2 * (canvas.width/400);
+  const r2 = cx + gap/2 * (canvas.width/400);
+  // Person 1
+  ctx.fillStyle='#1E88E5'; ctx.beginPath(); ctx.arc(r1,H-80,12,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#1565C0'; ctx.fillRect(r1-6,H-68,12,20); ctx.fillRect(r1-9,H-48,8,15); ctx.fillRect(r1+1,H-48,8,15);
+  // Person 2
+  ctx.fillStyle='#E53935'; ctx.beginPath(); ctx.arc(r2,H-80,12,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#B71C1C'; ctx.fillRect(r2-6,H-68,12,20); ctx.fillRect(r2-9,H-48,8,15); ctx.fillRect(r2+1,H-48,8,15);
+  // Distance label
+  ctx.strokeStyle='rgba(255,215,0,.4)'; ctx.lineWidth=1; ctx.setLineDash([5,5]);
+  ctx.beginPath(); ctx.moveTo(r1,H-30); ctx.lineTo(r2,H-30); ctx.stroke(); ctx.setLineDash([]);
+  const dist = Math.round(gap);
+  drawLabel(W/2, H-20, dist > 0 ? dist+'m apart' : '🤝 MET!', '#FFD700');
+  drawLabel(r1,H-100,'Ravi 5m/s →','#1CB0F6');
+  drawLabel(r2,H-100,'← Priya 3m/s','#FF9600');
+}
+
+function drawBulletCar(){
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#1a1a2a'; ctx.fillRect(0,H-50,W,50);
+  // Jeep moving right
+  const jx = 30 + (t*25)%120;
+  drawCar(jx, H-90, '#4CAF50', 70, 32);
+  drawArrow(jx+80,H-70,jx+110,H-70,'#4CAF50','100 m/s');
+  // Bullet
+  const bx = jx+80 + (t*140)%W;
+  if(bx < W){
+    ctx.fillStyle='#FFD700';
+    ctx.beginPath(); ctx.ellipse(bx,H-74,8,5,0,0,Math.PI*2); ctx.fill();
+    // Bullet trail
+    ctx.fillStyle='rgba(255,215,0,0.3)';
+    ctx.fillRect(bx-30,H-76,30,4);
+  }
+  // Person on left
+  ctx.fillStyle='#e8a87c'; ctx.beginPath(); ctx.arc(W-50,H-80,12,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#9C27B0'; ctx.fillRect(W-56,H-68,12,20);
+  drawLabel(W-50,H-100,'You','#aaa');
+  drawLabel(jx+35,H-115,'+100 m/s','#4CAF50');
+  drawLabel(W/2,20,'800 + 100 = 900 m/s reaches you','#FFD700');
+}
+
+function drawOvertake(){
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#0d1525'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#252535'; ctx.fillRect(0,H-80,W,80);
+  ctx.strokeStyle='#FFD700'; ctx.lineWidth=2; ctx.setLineDash([25,15]);
+  ctx.beginPath(); ctx.moveTo(0,H-40); ctx.lineTo(W,H-40); ctx.stroke(); ctx.setLineDash([]);
+  // Truck (slower)
+  const trx = 80 + (t*22)%(W);
+  ctx.fillStyle='#795548'; ctx.beginPath(); ctx.roundRect(trx,H-80,90,45,4); ctx.fill();
+  ctx.fillStyle='#4E342E'; ctx.fillRect(trx,H-80,25,45);
+  ctx.fillStyle='rgba(135,210,250,0.5)'; ctx.fillRect(trx+2,H-75,20,20);
+  drawLabel(trx+45,H-95,'Truck 80 km/h','#FF9600');
+  // Your car
+  const cx = trx - 70 + (t*8)%80;
+  drawCar(cx, H-75, '#E53935', 55, 28);
+  drawLabel(cx+28,H-95,'You 100 km/h','#58CC02');
+  drawLabel(W/2,20,'Relative speed = 20 km/h. Need to cover 50+20+4m','#aaa');
+}
+
+function drawRiverIntro(){
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#0a1628'; ctx.fillRect(0,0,W,H);
+  // River
+  const rg = ctx.createLinearGradient(0,60,0,H-60);
+  rg.addColorStop(0,'#0D47A1'); rg.addColorStop(1,'#1565C0');
+  ctx.fillStyle=rg; ctx.fillRect(0,60,W,H-120);
+  // Banks
+  ctx.fillStyle='#2E7D32'; ctx.fillRect(0,0,W,64); ctx.fillRect(0,H-64,W,64);
+  // Current arrows
+  for(let i=0;i<5;i++){
+    const ax = ((t*60 + i*80) % (W+40)) - 20;
+    const ay = 80 + i*20;
+    drawArrow(ax,ay,ax+40,ay,'rgba(28,176,246,0.6)');
+  }
+  // Swimmer
+  const sx = W*0.4 + Math.sin(t)*30;
+  const sy = 80 + (t*18)%(H-180);
+  ctx.fillStyle='#FF7043'; ctx.beginPath(); ctx.arc(sx,sy,8,0,Math.PI*2); ctx.fill();
+  drawArrow(sx,sy,sx,sy-25,'#58CC02','N');
+  drawArrow(sx,sy,sx+25,sy,'#1CB0F6','E drift');
+  drawLabel(W/2,H-48,'River → 4 m/s east','#1CB0F6');
+  drawLabel(W*0.38,50,'↑ Swimmer 3 m/s north','#58CC02');
+}
+
+function drawRiverTime(){
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#0a1628'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#1565C0'; ctx.fillRect(0,50,W,H-100);
+  ctx.fillStyle='#2E7D32'; ctx.fillRect(0,0,W,54); ctx.fillRect(0,H-54,W,54);
+  for(let i=0;i<5;i++){
+    const ax = ((t*50 + i*70) % (W+40)) - 20;
+    drawArrow(ax,80+i*18,ax+35,80+i*18,'rgba(28,176,246,0.5)');
+  }
+  // Swimmer going straight across (minimum time)
+  const st = (t*0.5)%1;
+  const sy = 54 + st*(H-108);
+  const sx = W*0.4 + st*(H-108)*0.6; // drifts
+  ctx.fillStyle='#FF7043'; ctx.beginPath(); ctx.arc(sx,sy,9,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(255,112,67,0.4)'; ctx.lineWidth=2; ctx.setLineDash([5,5]);
+  ctx.beginPath();
+  for(let dt=0;dt<st;dt+=0.02){
+    const py = 54+dt*(H-108), px = W*0.4+dt*(H-108)*0.6;
+    dt===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+  } ctx.stroke(); ctx.setLineDash([]);
+  drawLabel(W*0.4,30,'Aim straight across → Min TIME','#58CC02');
+  drawLabel(W*0.65,H-30,'(drifts but fastest crossing)','#aaa');
+}
+
+function drawRiverDistance(){
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#0a1628'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#1565C0'; ctx.fillRect(0,50,W,H-100);
+  ctx.fillStyle='#2E7D32'; ctx.fillRect(0,0,W,54); ctx.fillRect(0,H-54,W,54);
+  for(let i=0;i<5;i++){
+    const ax = ((t*50 + i*70) % (W+40)) - 20;
+    drawArrow(ax,80+i*18,ax+35,80+i*18,'rgba(28,176,246,0.5)');
+  }
+  // Swimmer going at upstream angle
+  const st = (t*0.4)%1;
+  const sy = 54 + st*(H-108);
+  const sx = W*0.5; // stays straight!
+  ctx.fillStyle='#FFD700'; ctx.beginPath(); ctx.arc(W*0.5,sy,9,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(255,215,0,0.4)'; ctx.lineWidth=2; ctx.setLineDash([5,5]);
+  ctx.beginPath(); ctx.moveTo(W*0.5,54); ctx.lineTo(W*0.5,sy); ctx.stroke(); ctx.setLineDash([]);
+  drawArrow(W*0.5,sy,W*0.5-30,sy-25,'#FFD700','upstream angle');
+  drawLabel(W*0.5,30,'Aim upstream → STRAIGHT path','#FFD700');
+}
+
+function drawRainScene(){
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#0a0f1e'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#1a2030'; ctx.fillRect(0,H-50,W,50);
+  // Rain drops
+  ctx.strokeStyle='rgba(100,160,255,0.7)'; ctx.lineWidth=1.5;
+  for(let i=0;i<40;i++){
+    const rx = (i*47 + t*0) % W;
+    const ry = (i*37 + t*200) % H;
+    ctx.beginPath(); ctx.moveTo(rx,ry); ctx.lineTo(rx,ry+12); ctx.stroke();
+  }
+  // Runner
+  const px = W*0.5;
+  const legS = Math.sin(t*6)*15;
+  ctx.fillStyle='#e8a87c'; ctx.beginPath(); ctx.arc(px,H-100,12,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#FF7043'; ctx.lineWidth=4;
+  ctx.beginPath(); ctx.moveTo(px,H-88); ctx.lineTo(px,H-65); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px,H-75); ctx.lineTo(px-15,H-60); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px,H-75); ctx.lineTo(px+15,H-60); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px,H-65); ctx.lineTo(px+legS,H-50); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px,H-65); ctx.lineTo(px-legS,H-50); ctx.stroke();
+  // Umbrella tilted
+  const uAngle = -0.5;
+  ctx.strokeStyle='#9C27B0'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(px,H-112); ctx.lineTo(px+15*Math.cos(uAngle-Math.PI/2),H-112+15*Math.sin(uAngle-Math.PI/2)); ctx.stroke();
+  ctx.fillStyle='rgba(156,39,176,0.4)'; ctx.beginPath();
+  ctx.arc(px+5,H-120,25,-0.8,Math.PI+0.8); ctx.fill();
+  // Vector diagram
+  drawArrow(W*0.8,100,W*0.8,145,'#6BB2FF','8 m/s↓');
+  drawArrow(W*0.8,145,W*0.8+40,145,'rgba(255,112,67,0.5)','6→');
+  drawArrow(W*0.8,100,W*0.8+40,145,'#FFD700','apparent');
+}
+
+function drawRiverImpossible(){
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#0a1628'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#1565C0'; ctx.fillRect(0,50,W,H-100);
+  ctx.fillStyle='#2E7D32'; ctx.fillRect(0,0,W,54); ctx.fillRect(0,H-54,W,54);
+  // Fast current arrows
+  for(let i=0;i<7;i++){
+    const ax = ((t*90 + i*60) % (W+40)) - 20;
+    drawArrow(ax,70+i*15,ax+55,70+i*15,'rgba(28,176,246,0.7)');
+  }
+  drawLabel(W/2,30,'River: 5 m/s','#1CB0F6');
+  drawLabel(W/2,H-30,'Swimmer: 3 m/s','#FF7043');
+  // Swimmer getting swept
+  const sx = W*0.3 + (t*30)%W*0.5;
+  const sy = 54 + (t*15)%(H-108);
+  ctx.fillStyle='#FF7043'; ctx.beginPath(); ctx.arc(sx,sy,8,0,Math.PI*2); ctx.fill();
+  ctx.font='bold 16px Nunito'; ctx.textAlign='center';
+  ctx.fillStyle='#FF4B4B'; ctx.fillText('❌ Cannot go straight',W/2,H/2);
+  ctx.textAlign='left';
+}
+
+function drawRiverMinDrift(){
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#0a1628'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#1565C0'; ctx.fillRect(0,50,W,H-100);
+  ctx.fillStyle='#2E7D32'; ctx.fillRect(0,0,W,54); ctx.fillRect(0,H-54,W,54);
+  for(let i=0;i<6;i++){
+    const ax = ((t*80 + i*65) % (W+40)) - 20;
+    drawArrow(ax,72+i*16,ax+50,72+i*16,'rgba(28,176,246,0.6)');
+  }
+  // Optimal angle path
+  const st = (t*0.35)%1;
+  const sx = W*0.3 + st*(H-108)*0.35;
+  const sy = 54 + st*(H-108);
+  ctx.fillStyle='#CE82FF'; ctx.beginPath(); ctx.arc(sx,sy,9,0,Math.PI*2); ctx.fill();
+  drawLabel(W*0.5,30,'Optimal angle → Minimum drift','#CE82FF');
+  // Formula
+  ctx.font='bold 14px Nunito'; ctx.fillStyle='#FFD700'; ctx.textAlign='center';
+  ctx.fillText('Min drift = d × √(vᵣ²−vₛ²) / vₛ',W/2,H/2);
+  ctx.textAlign='left';
+}
+
+function drawFreeFall(){
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#0a0f1e'; ctx.fillRect(0,0,W,H);
+  for(let i=0;i<30;i++) drawStar(Math.sin(i*57)*W/2+W/2,Math.cos(i*43)*H/2+H/2,1.5);
+  // Two balls falling at same speed
+  const by = 20 + (t*60)%(H-40);
+  ctx.fillStyle='#1E88E5'; ctx.beginPath(); ctx.arc(W*0.4,by,14,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#E53935'; ctx.beginPath(); ctx.arc(W*0.6,by,14,0,Math.PI*2); ctx.fill();
+  // g arrows (same)
+  drawArrow(W*0.4,by+14,W*0.4,by+35,'#1E88E5','g');
+  drawArrow(W*0.6,by+14,W*0.6,by+35,'#E53935','g');
+  // Relative
+  ctx.font='bold 15px Nunito'; ctx.textAlign='center';
+  ctx.fillStyle='#58CC02'; ctx.fillText('Relative acceleration = g − g = 0',W/2,H-20);
+  ctx.fillStyle='#FFD700'; ctx.fillText('They float beside each other!',W/2,H-40);
+  ctx.textAlign='left';
+}
+
+function drawProjectileCar(){
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#0a0f1e'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#1a2a1a'; ctx.fillRect(0,H-50,W,50);
+  const t2 = (t*0.5)%3;
+  // Car moving right
+  const cx2 = 50 + t2*50;
+  drawCar(cx2, H-80, '#4CAF50', 60, 28);
+  // Ball trajectory from outside
+  const bx = cx2+50 + t2*50;
+  const by = H-100 - t2*80 + 0.5*9.8*t2*t2*4;
+  if(by < H-50){
+    ctx.fillStyle='#FFD700'; ctx.beginPath(); ctx.arc(bx,by,8,0,Math.PI*2); ctx.fill();
+    // Trail
+    for(let dt=0;dt<t2;dt+=0.1){
+      const tx2=cx2+50+dt*50, ty=H-100-dt*80+0.5*9.8*dt*dt*4;
+      ctx.fillStyle=`rgba(255,215,0,${0.3-dt/t2*0.3})`;
+      ctx.beginPath(); ctx.arc(tx2,ty,3,0,Math.PI*2); ctx.fill();
+    }
+  }
+  drawLabel(cx2+30,H-100,'→ 20 m/s','#4CAF50');
+  ctx.font='bold 14px Nunito'; ctx.textAlign='center';
+  ctx.fillStyle='#CE82FF'; ctx.fillText('Outside sees: PARABOLA',W/2,25);
+  ctx.fillStyle='#58CC02'; ctx.fillText('Inside car sees: straight up/down',W/2,48);
+  ctx.textAlign='left';
+}
+
+function drawTwoBalls(){
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#0a0f1e'; ctx.fillRect(0,0,W,H);
+  for(let i=0;i<25;i++) drawStar(i*37%W,i*29%H,1.5);
+  const elapsed = t*0.5;
+  const y1 = H*0.7 - elapsed*40 + 0.5*9.8*elapsed*elapsed*2;
+  const y2 = H*0.7 - elapsed*30 + 0.5*9.8*elapsed*elapsed*2;
+  ctx.fillStyle='#1E88E5'; ctx.beginPath(); ctx.arc(W*0.45,Math.max(30,y1),12,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#E53935'; ctx.beginPath(); ctx.arc(W*0.55,Math.max(40,y2),12,0,Math.PI*2); ctx.fill();
+  drawLabel(W*0.45,Math.max(30,y1)-20,'A: 15 m/s','#1CB0F6');
+  drawLabel(W*0.55,Math.max(40,y2)-20,'B: 10 m/s','#FF4B4B');
+  ctx.font='bold 14px Nunito'; ctx.textAlign='center';
+  ctx.fillStyle='#58CC02'; ctx.fillText('Relative velocity A vs B = 5 m/s (constant!)',W/2,H-20);
+  ctx.textAlign='left';
+}
+
+function drawFormulaScene(){
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#0d1525'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(88,204,2,0.1)'; ctx.fillRect(20,20,W-40,H-40);
+  ctx.strokeStyle='rgba(88,204,2,0.3)'; ctx.lineWidth=2; ctx.strokeRect(20,20,W-40,H-40);
+  ctx.font='bold 18px Nunito'; ctx.textAlign='center'; ctx.fillStyle='#FFD700';
+  ctx.fillText('📐 RIVER CROSSING FORMULAS',W/2,55);
+  ctx.font='15px Nunito'; ctx.fillStyle='#58CC02';
+  ctx.fillText('Min TIME = d / vₛ  (aim straight)',W/2,90);
+  ctx.fillStyle='#1CB0F6';
+  ctx.fillText('Drift = vᵣ × (d/vₛ)',W/2,115);
+  ctx.fillStyle='#CE82FF';
+  ctx.fillText('Min DISTANCE: sinθ = vᵣ/vₛ (aim upstream)',W/2,140);
+  ctx.fillStyle='#FF9600';
+  ctx.fillText('Condition: vₛ > vᵣ  (must be faster than river)',W/2,165);
+  ctx.fillStyle='rgba(255,75,75,0.8)';
+  ctx.fillText('If vₛ < vᵣ: cannot go straight!',W/2,190);
+  ctx.textAlign='left';
+}
+
+function drawImpossibleRiver(){
+  drawRiverImpossible();
+  ctx.font='bold 14px Nunito'; ctx.textAlign='center';
+  ctx.fillStyle='#CE82FF'; ctx.fillText('sinθ = vᵣ/vₛ = 6/4 = 1.5 > 1 → Impossible!',canvas.width/2,canvas.height/2+30);
+  ctx.textAlign='left';
+}
+
+function drawRainJEE(){
+  drawRainScene();
+  const W=canvas.width, H=canvas.height;
+  ctx.font='bold 15px Nunito'; ctx.textAlign='center';
+  ctx.fillStyle='#FFD700'; ctx.fillText('JEE 2019: tanθ = walking/rain = ?',W/2,H-20);
+  ctx.textAlign='left';
+}
+
+function drawRiverJEE(){
+  drawRiverTime();
+  const W=canvas.width, H=canvas.height;
+  ctx.font='bold 15px Nunito'; ctx.textAlign='center';
+  ctx.fillStyle='#FFD700'; ctx.fillText('JEE Advanced: v_s=5, width=40m, min time=?',W/2,H-20);
+  ctx.textAlign='left';
+}
+
+// ══════════════════════════════════════════════════════════
+//  QUIZ LOGIC
+// ══════════════════════════════════════════════════════════
+function showIntro(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('intro').classList.add('active');
+  if(animFrameId) cancelAnimationFrame(animFrameId);
+}
+
+function startQuiz(){
+  state = {current:0,xp:0,lives:3,correct:0,streak:0,bestStreak:0,answered:false,animFrame:null};
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('quiz').classList.add('active');
+  renderQuestion(0);
+}
+
+function renderQuestion(i){
+  if(i >= Q.length){ showComplete(); return; }
+  const q = Q[i];
+  state.answered = false;
+  hideFeedback();
+
+  // Phase label
+  document.getElementById('phase-label').textContent = q.phase;
+  document.getElementById('question-num').textContent = `Question ${i+1} / ${Q.length}`;
+
+  // Progress
+  const pct = (i/Q.length)*100;
+  document.getElementById('progress-bar').style.width = pct+'%';
+
+  // XP
+  document.getElementById('xp-count').textContent = state.xp;
+
+  // Hearts
+  const hearts = '❤️'.repeat(state.lives) + '🖤'.repeat(3-state.lives);
+  document.getElementById('hearts').textContent = hearts;
+
+  // Scene
+  document.getElementById('scene-label').textContent = q.scene.replace(/_/g,' ').toUpperCase();
+  startSceneLoop(q.scene);
+
+  // Bear bubble
+  document.getElementById('bubble').textContent = q.bubble;
+  setBearMood('idle');
+
+  // Question text
+  document.getElementById('q-text').textContent = q.q;
+
+  // Clear options
+  const opts = document.getElementById('options');
+  opts.innerHTML = '';
+  document.getElementById('tf-wrap').style.display = 'none';
+  document.getElementById('observe-btn').style.display = 'none';
+
+  if(q.type === 'mcq'){
+    q.opts.forEach((o,idx)=>{
+      const btn = document.createElement('div');
+      btn.className = 'opt';
+      btn.innerHTML = `<div class="opt-icon">${String.fromCharCode(65+idx)}</div><span>${o}</span>`;
+      btn.onclick = ()=>{ if(!state.answered) checkAnswer(idx, btn, q); };
+      opts.appendChild(btn);
+    });
+  } else if(q.type === 'tf'){
+    document.getElementById('tf-wrap').style.display = 'flex';
+  } else if(q.type === 'observe'){
+    document.getElementById('observe-btn').style.display = 'block';
+  }
+
+  // Animate in
+  const qz = document.getElementById('quiz');
+  qz.classList.remove('entering');
+  void qz.offsetWidth;
+  qz.classList.add('entering');
+}
+
+function checkAnswer(selected, btn, q){
+  if(state.answered) return;
+  state.answered = true;
+  const correct = selected === q.ans;
+
+  document.querySelectorAll('.opt').forEach((o,i)=>{
+    if(i === q.ans) o.classList.add('correct');
+    else if(i === selected && !correct) o.classList.add('wrong');
+  });
+
+  if(correct){
+    state.correct++; state.xp += q.xp; state.streak++;
+    if(state.streak > state.bestStreak) state.bestStreak = state.streak;
+    setBearMood('celebrate');
+    showFeedback(true, '🎯 Correct! +'+q.xp+' XP', q.explain);
+    if(state.streak >= 3) spawnConfetti();
+  } else {
+    state.lives = Math.max(0, state.lives-1);
+    state.streak = 0;
+    setBearMood('wrong');
+    showFeedback(false, '💡 Not quite!', q.explain);
+  }
+}
+
+function answerTF(val){
+  if(state.answered) return;
+  state.answered = true;
+  const q = Q[state.current];
+  const correct = val === q.ans;
+
+  if(correct){
+    state.correct++; state.xp += q.xp; state.streak++;
+    if(state.streak > state.bestStreak) state.bestStreak = state.streak;
+    setBearMood('celebrate');
+    showFeedback(true,'🎯 Correct! +'+q.xp+' XP', q.explain);
+    if(state.streak >= 3) spawnConfetti();
+  } else {
+    state.lives = Math.max(0,state.lives-1);
+    state.streak = 0;
+    setBearMood('wrong');
+    showFeedback(false,'💡 Not quite!', q.explain);
+  }
+}
+
+function continueObserve(){
+  if(state.answered) return;
+  state.answered = true;
+  const q = Q[state.current];
+  state.xp += q.xp;
+  setBearMood('celebrate');
+  showFeedback(true,'👀 Great observation! +'+q.xp+' XP', q.explain);
+}
+
+function showFeedback(ok, title, explain){
+  const fb = document.getElementById('feedback');
+  fb.className = ok ? 'correct-fb' : 'wrong-fb';
+  document.getElementById('fb-icon').textContent = ok ? '🎉' : '💡';
+  document.getElementById('fb-title').textContent = title;
+  document.getElementById('fb-explain').textContent = explain;
+  requestAnimationFrame(()=>{fb.classList.add('show')});
+  document.getElementById('xp-count').textContent = state.xp;
+  const hearts = '❤️'.repeat(state.lives) + '🖤'.repeat(3-state.lives);
+  document.getElementById('hearts').textContent = hearts;
+}
+
+function hideFeedback(){
+  const fb = document.getElementById('feedback');
+  fb.classList.remove('show');
+}
+
+function nextQuestion(){
+  hideFeedback();
+  setBearMood('idle');
+  state.current++;
+  setTimeout(()=>renderQuestion(state.current), 300);
+}
+
+function setBearMood(mood){
+  const bear = document.getElementById('bear-svg');
+  bear.className = '';
+  if(mood==='idle') bear.classList.add('bear-idle');
+  else if(mood==='celebrate') bear.classList.add('bear-celebrate');
+  else if(mood==='wrong') bear.classList.add('bear-wrong');
+  else if(mood==='think') bear.classList.add('bear-think');
+}
+
+function showComplete(){
+  if(animFrameId) cancelAnimationFrame(animFrameId);
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('complete').classList.add('active');
+  document.getElementById('progress-bar').style.width = '100%';
+  document.getElementById('final-xp').textContent = state.xp;
+  document.getElementById('final-streak').textContent = state.bestStreak;
+  const acc = Math.round((state.correct/Q.length)*100);
+  document.getElementById('final-acc').textContent = acc+'%';
+  const stars = acc>=90?'⭐⭐⭐':acc>=70?'⭐⭐':'⭐';
+  document.getElementById('final-stars').textContent = stars;
+  spawnConfetti(); spawnConfetti();
+}
+
+function spawnConfetti(){
+  const colors=['#58CC02','#1CB0F6','#FF9600','#CE82FF','#FFD900','#FF4B4B'];
+  for(let i=0;i<30;i++){
+    setTimeout(()=>{
+      const c=document.createElement('div');
+      c.className='confetti-piece';
+      c.style.cssText=`left:${Math.random()*100}vw;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};transform:rotate(${Math.random()*360}deg);animation-delay:${Math.random()*0.3}s;animation-duration:${1+Math.random()*0.8}s`;
+      document.body.appendChild(c);
+      setTimeout(()=>c.remove(),2000);
+    },i*40);
+  }
+}
+
+// Init
+resizeCanvas();
+</script>
+</body>
+</html>
