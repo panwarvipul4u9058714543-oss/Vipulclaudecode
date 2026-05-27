@@ -1,6 +1,10 @@
 # Claude Instructions for Vipul's Project
 
-## IMPORTANT — Read Memory Files First
+## ⚠️ MANDATORY — Read Memory Files BEFORE Responding to Anything
+DO NOT respond to the user until you have read ALL of these files.
+This is not optional. Vipul's full profile, history, and preferences are here.
+If you skip this, you will give wrong answers and forget who he is.
+
 At the start of EVERY session, read these files before doing anything:
 1. `.claude/memory/vipul-profile.md` — FULL cognitive, personality and strategic profile (READ THIS FIRST)
 2. `.claude/memory/projects.md` — what Vipul is building
