@@ -8,25 +8,46 @@ I write a short summary at the end of every session:
 
 ---
 
-## 2026-05-26
+## 2026-05-27
 **What we did:**
-- Set up Claude Code on the web to be as powerful as desktop
-- Created session-start hook (auto-installs dependencies)
-- Created auto-save hook (commits + pushes at session end)
-- Added Playwright MCP (browser control), Memory MCP, Filesystem MCP
-- Created 16 custom slash commands (/explain, /fix, /build, /learn, /review, /test, /debug, /deploy, /security, /optimize, /docs, /refactor, /database, /api, /git, /docker)
-- Added safety hook (blocks dangerous rm -rf, force push to main)
-- Created full CLAUDE.md with developer standards
-- Built living memory system (this file + projects, mistakes, preferences)
-
-**What Vipul learned:**
-- How Claude Code on the web works vs desktop
-- What hooks are and how they automate tasks
-- What MCP servers are (plugins that give Claude new powers)
-- How CLAUDE.md works as permanent memory
+- Answered Vipul's questions about full student coding setup
+- Explained GitHub Student Pack, free tools, AI agents landscape
+- Covered VS Code, Node.js, Python, Git setup guide
+- Explained open source models (Llama, Mistral, Hermes, Phi-4, Qwen)
+- Explained AI coding agents: Claude Code, Cursor, Cline, Aider, OpenHands, OpenClaw
+- Explained how to stay up to date (newsletters, GitHub trending, YouTube)
+- Gave recommended 3-month learning path
 
 **Continue next session:**
-- Start building a real project
-- Merge PR #2 into main to activate all settings permanently
+- Vipul needs to apply for GitHub Student Pack
+- Set up VS Code + Node.js + Python on laptop
+- Get Together AI key to activate Hermes Agent
+- Start actual coding — first real project
 
-<!-- Claude: Add new entry at the TOP after each session, newest first -->
+---
+
+## 2026-05-26
+**What we did:**
+- Saved Vipul's FULL cognitive and personality profile to vipul-profile.md
+- Built Hermes Agent MCP server (connects Claude to Hermes via Together AI)
+- Set up self-evolution engine (evolve.sh — auto-writes new commands)
+- Added 11 MCP servers (Playwright, Memory, Filesystem, GitHub, Notion, Supabase, Vercel, etc.)
+- Added 22 custom slash commands
+- Built complete memory system (7 memory files)
+- Added safety hooks, quality gate, auto-debug
+- Made everything auto-save to GitHub permanently
+- Explained Claude Code vs Desktop vs OpenClaw
+- Explained student benefits and coding setup
+
+**What Vipul's profile contains:**
+- PCB background, non-technical student learning to code
+- Building AI education product (core insight: different learners = different cognitive markets)
+- Intensely curiosity-driven, first-principles thinker
+- Loves: physics, consciousness, AI, quantum mechanics, Vedanta
+- Struggles with: consistency, gets pulled in many directions
+- Wants: understanding not memorization, intuition before formulas
+- Full profile in: .claude/memory/vipul-profile.md
+
+**Continue next session:**
+- Laptop setup + GitHub Student Pack
+- Start first real coding project
