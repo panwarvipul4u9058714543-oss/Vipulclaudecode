@@ -100,16 +100,27 @@ echo "   $(date '+%A, %B %d %Y — %H:%M')"
 echo "════════════════════════════════════════"
 
 PROGRESS="$PROJECT_DIR/.claude/memory/progress.md"
-MISTAKES="$PROJECT_DIR/.claude/memory/mistakes.md"
+PROFILE="$PROJECT_DIR/.claude/memory/vipul-profile.md"
 ERRORS="$PROJECT_DIR/.claude/memory/errors.md"
-PATTERNS="$PROJECT_DIR/.claude/memory/patterns.md"
+
+# ── CRITICAL: Always announce profile exists ──────────────
+echo ""
+echo "IMPORTANT — READ BEFORE RESPONDING:"
+if [ -f "$PROFILE" ]; then
+  echo "  ✅ vipul-profile.md EXISTS — Read it now (full cognitive + personality profile)"
+  echo "  ✅ preferences.md EXISTS — Read it now"
+  echo "  ✅ projects.md EXISTS — Read it now"
+  echo "  ✅ mistakes.md EXISTS — Read it now"
+  echo "  → Claude MUST read ALL memory files before responding to anything"
+else
+  echo "  ⚠️  Profile file missing — ask Vipul to reshare his profile"
+fi
 
 # Show last session summary
 if [ -f "$PROGRESS" ]; then
   echo ""
   echo "LAST SESSION:"
-  grep -A5 "^## $(date '+%Y-%m-%d')" "$PROGRESS" 2>/dev/null | head -6 || \
-  grep -A5 "^## " "$PROGRESS" 2>/dev/null | head -6 || \
+  grep -A8 "^## " "$PROGRESS" 2>/dev/null | head -10 || \
   echo "  No previous session found."
 fi
 
@@ -120,7 +131,7 @@ if [ -f "$ERRORS" ] && grep -q "Exit code" "$ERRORS" 2>/dev/null; then
   grep "Command:" "$ERRORS" 2>/dev/null | tail -3 | sed 's/^/  /'
 fi
 
-# Show auto-created commands from evolution engine
+# Show available commands count
 NEW_COMMANDS=$(ls "$PROJECT_DIR/.claude/commands/" 2>/dev/null | wc -l)
 echo ""
 echo "AVAILABLE COMMANDS: $NEW_COMMANDS custom slash commands ready"
