@@ -94,3 +94,4 @@ This helps track exactly what changed and when.
 
 ### Session ended: 2026-05-27 21:34
 
+- `2026-05-27 21:35` → edited `/root/.claude/stop-hook-git-check.sh`
