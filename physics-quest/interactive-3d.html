@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>3D River Crossing — Interactive Physics</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0F1117; font-family:'Segoe UI',system-ui,sans-serif; overflow:hidden; color:#fff; }
+  canvas { display:block; }
+
+  /* ── HUD ── */
+  #hud {
+    position:fixed; top:0; left:0; right:0;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:12px 20px; background:rgba(15,17,23,0.85);
+    backdrop-filter:blur(12px); border-bottom:1px solid rgba(255,255,255,.08);
+    z-index:10; gap:16px; flex-wrap:wrap;
+  }
+  #title-hud { font-size:16px; font-weight:700; color:#1CB0F6; white-space:nowrap; }
+  #hint { font-size:12px; color:rgba(255,255,255,.4); white-space:nowrap; }
+
+  /* ── Control panel ── */
+  #panel {
+    position:fixed; right:0; top:60px; bottom:0;
+    width:260px; background:rgba(15,17,23,0.92);
+    backdrop-filter:blur(16px); border-left:1px solid rgba(255,255,255,.08);
+    padding:18px 16px; overflow-y:auto; z-index:10;
+    display:flex; flex-direction:column; gap:16px;
+  }
+  .section-label {
+    font-size:10px; font-weight:700; letter-spacing:2px;
+    color:rgba(255,255,255,.35); text-transform:uppercase; margin-bottom:4px;
+  }
+  .slider-row { display:flex; flex-direction:column; gap:6px; }
+  .slider-row label { font-size:13px; font-weight:600; display:flex; justify-content:space-between; }
+  .slider-row label span { color:#FFD900; font-weight:800; }
+  input[type=range] {
+    width:100%; -webkit-appearance:none; height:6px; border-radius:99px;
+    background:rgba(255,255,255,.1); outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
+    background:#1CB0F6; cursor:pointer; box-shadow:0 0 8px rgba(28,176,246,.5);
+  }
+
+  .btn-row { display:flex; gap:8px; flex-wrap:wrap; }
+  .btn {
+    flex:1; padding:10px 6px; border:none; border-radius:10px;
+    font-size:13px; font-weight:700; cursor:pointer; transition:.15s;
+    min-width:60px;
+  }
+  .btn:active { transform:scale(.96); }
+  .btn-green  { background:#58CC02; color:#fff; }
+  .btn-blue   { background:#1CB0F6; color:#fff; }
+  .btn-gray   { background:rgba(255,255,255,.1); color:#fff; }
+  .btn-orange { background:#FF9600; color:#fff; }
+
+  .toggle-row { display:flex; flex-direction:column; gap:6px; }
+  .toggle {
+    display:flex; align-items:center; gap:10px; cursor:pointer;
+    padding:8px 10px; border-radius:8px; background:rgba(255,255,255,.05);
+    transition:.15s; font-size:13px; font-weight:600;
+  }
+  .toggle:hover { background:rgba(255,255,255,.1); }
+  .toggle-dot {
+    width:32px; height:18px; border-radius:99px; background:rgba(255,255,255,.15);
+    position:relative; transition:.2s; flex-shrink:0;
+  }
+  .toggle-dot::after {
+    content:''; position:absolute; width:14px; height:14px; border-radius:50%;
+    background:#aaa; top:2px; left:2px; transition:.2s;
+  }
+  .toggle.on .toggle-dot { background:#58CC02; }
+  .toggle.on .toggle-dot::after { left:16px; background:#fff; }
+
+  /* ── Live readout ── */
+  #readout {
+    position:fixed; left:16px; bottom:16px;
+    background:rgba(15,17,23,0.88); backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.1); border-radius:14px;
+    padding:14px 18px; z-index:10; min-width:220px;
+  }
+  #readout h4 { font-size:11px; letter-spacing:1.5px; color:rgba(255,255,255,.35); text-transform:uppercase; margin-bottom:8px; }
+  .readout-row { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:4px; font-size:13px; }
+  .readout-row .key { color:rgba(255,255,255,.5); }
+  .readout-row .val { font-weight:800; }
+
+  /* ── Formula box ── */
+  #formula-box {
+    position:fixed; left:16px; top:70px;
+    background:rgba(15,17,23,0.88); backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.1); border-radius:14px;
+    padding:14px 18px; z-index:10; max-width:240px;
+  }
+  #formula-box h4 { font-size:11px; letter-spacing:1.5px; color:rgba(255,255,255,.35); text-transform:uppercase; margin-bottom:8px; }
+  .fml { font-size:13px; margin-bottom:5px; }
+  .fml .eq { color:#FFD900; font-weight:700; }
+
+  /* ── Result toast ── */
+  #toast {
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0);
+    background:rgba(88,204,2,.95); border-radius:20px; padding:24px 36px;
+    text-align:center; z-index:50; transition:.3s cubic-bezier(.34,1.56,.64,1);
+    pointer-events:none;
+  }
+  #toast.show { transform:translate(-50%,-50%) scale(1); }
+  #toast h2 { font-size:28px; margin-bottom:4px; }
+  #toast p  { font-size:15px; opacity:.9; }
+
+  /* ── Mobile panel ── */
+  @media(max-width:700px){
+    #panel { width:100%; top:auto; bottom:0; height:200px; flex-direction:row; overflow-x:auto; overflow-y:hidden; flex-wrap:nowrap; }
+    #formula-box { display:none; }
+    #readout { display:none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="title-hud">🌊 River Crossing — Interactive 3D</div>
+  <div id="hint">🖱 Drag to rotate · Scroll to zoom · Pinch on mobile</div>
+</div>
+
+<!-- Side panel -->
+<div id="panel">
+  <div>
+    <div class="section-label">Swimmer</div>
+    <div class="slider-row">
+      <label>Speed <span id="vs-val">3</span> m/s</label>
+      <input type="range" id="vs" min="1" max="8" step="0.5" value="3">
+    </div>
+    <div class="slider-row" style="margin-top:10px">
+      <label>Angle (from bank) <span id="angle-val">90</span>°</label>
+      <input type="range" id="angle" min="10" max="170" step="1" value="90">
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">River</div>
+    <div class="slider-row">
+      <label>Current speed <span id="vr-val">4</span> m/s</label>
+      <input type="range" id="vr" min="0" max="10" step="0.5" value="4">
+    </div>
+    <div class="slider-row" style="margin-top:10px">
+      <label>River width <span id="width-val">10</span> m</label>
+      <input type="range" id="rwidth" min="5" max="20" step="1" value="10">
+    </div>
+  </div>
+
+  <div>
+    <div class="btn-row">
+      <button class="btn btn-green" id="btn-play">▶ Start</button>
+      <button class="btn btn-gray"  id="btn-reset">↩ Reset</button>
+    </div>
+    <button class="btn btn-orange" id="btn-optimal" style="width:100%;margin-top:8px">🎯 Show Optimal Angle</button>
+  </div>
+
+  <div>
+    <div class="section-label">Show / Hide</div>
+    <div class="toggle-row">
+      <div class="toggle on" id="tog-vectors" onclick="toggleLayer('vectors',this)">
+        <div class="toggle-dot"></div> Velocity Vectors
+      </div>
+      <div class="toggle on" id="tog-path" onclick="toggleLayer('path',this)">
+        <div class="toggle-dot"></div> Trail Path
+      </div>
+      <div class="toggle on" id="tog-particles" onclick="toggleLayer('particles',this)">
+        <div class="toggle-dot"></div> Water Flow
+      </div>
+      <div class="toggle on" id="tog-trees" onclick="toggleLayer('trees',this)">
+        <div class="toggle-dot"></div> Environment
+      </div>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:12px">
+    <div class="section-label">Camera presets</div>
+    <div class="btn-row">
+      <button class="btn btn-blue" onclick="setCam('top')">Top</button>
+      <button class="btn btn-blue" onclick="setCam('side')">Side</button>
+      <button class="btn btn-blue" onclick="setCam('iso')">3D</button>
+    </div>
+  </div>
+</div>
+
+<!-- Formula box -->
+<div id="formula-box">
+  <h4>Physics</h4>
+  <div class="fml">Time = <span class="eq" id="f-time">—</span></div>
+  <div class="fml">Drift = <span class="eq" id="f-drift">—</span></div>
+  <div class="fml">Result speed = <span class="eq" id="f-speed">—</span></div>
+  <div class="fml" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.1)">
+    Min time angle = <span class="eq">90°</span><br>
+    Straight path: <span class="eq" id="f-straight">—</span>
+  </div>
+</div>
+
+<!-- Live readout -->
+<div id="readout">
+  <h4>Live Values</h4>
+  <div class="readout-row"><span class="key">Swimmer vel</span><span class="val" id="r-vs" style="color:#58CC02">—</span></div>
+  <div class="readout-row"><span class="key">River current</span><span class="val" id="r-vr" style="color:#1CB0F6">—</span></div>
+  <div class="readout-row"><span class="key">Resultant</span><span class="val" id="r-res" style="color:#FFD900">—</span></div>
+  <div class="readout-row"><span class="key">Angle</span><span class="val" id="r-angle" style="color:#CE82FF">—</span></div>
+</div>
+
+<!-- Toast -->
+<div id="toast"><h2 id="toast-h"></h2><p id="toast-p"></p></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ── Renderer ───────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+document.body.appendChild(renderer.domElement);
+renderer.domElement.style.position = 'fixed';
+renderer.domElement.style.top = '0';
+renderer.domElement.style.left = '0';
+renderer.domElement.style.zIndex = '1';
+
+// ── Scene ──────────────────────────────────────────────────
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0d18);
+scene.fog = new THREE.FogExp2(0x0a0d18, 0.018);
+
+// ── Camera ─────────────────────────────────────────────────
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 300);
+camera.position.set(0, 18, 26);
+
+// ── Controls ───────────────────────────────────────────────
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.minDistance = 6;
+controls.maxDistance = 60;
+controls.maxPolarAngle = Math.PI / 2.05;
+controls.target.set(0, 0, 0);
+
+// ── Lights ─────────────────────────────────────────────────
+const ambient = new THREE.AmbientLight(0x8899bb, 0.5);
+scene.add(ambient);
+
+const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+sun.position.set(15, 30, 15);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.near = 0.5;
+sun.shadow.camera.far = 100;
+sun.shadow.camera.left = -30;
+sun.shadow.camera.right = 30;
+sun.shadow.camera.top = 30;
+sun.shadow.camera.bottom = -30;
+scene.add(sun);
+
+const fill = new THREE.DirectionalLight(0x4466ff, 0.3);
+fill.position.set(-10, 10, -10);
+scene.add(fill);
+
+// ── Stars ──────────────────────────────────────────────────
+{
+  const geo = new THREE.BufferGeometry();
+  const positions = [];
+  for (let i = 0; i < 2000; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi   = Math.acos(2 * Math.random() - 1);
+    const r     = 150;
+    positions.push(r * Math.sin(phi) * Math.cos(theta),
+                   r * Math.cos(phi),
+                   r * Math.sin(phi) * Math.sin(theta));
+  }
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  const mat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.4, sizeAttenuation: true });
+  scene.add(new THREE.Points(geo, mat));
+}
+
+// ══════════════════════════════════════════════════════════
+// SCENE OBJECTS
+// ══════════════════════════════════════════════════════════
+const layers = { vectors: true, path: true, particles: true, trees: true };
+
+// ── Banks ──────────────────────────────────────────────────
+const bankMat = new THREE.MeshLambertMaterial({ color: 0x2d6a2d });
+
+function makeBank(z) {
+  const g = new THREE.BoxGeometry(32, 0.6, 8);
+  const m = new THREE.Mesh(g, bankMat);
+  m.position.set(0, -0.3, z);
+  m.receiveShadow = true;
+  scene.add(m);
+  return m;
+}
+makeBank(-9);  // north bank (destination)
+makeBank(9);   // south bank (start)
+
+// Bank labels (CSS2D-like using HTML overlay)
+function makeLabel(text, color, x, y, z) {
+  const div = document.createElement('div');
+  div.style.cssText = `position:fixed;font-size:13px;font-weight:700;color:${color};
+    background:rgba(0,0,0,.55);padding:4px 10px;border-radius:8px;pointer-events:none;
+    text-shadow:0 1px 3px rgba(0,0,0,.8);z-index:5`;
+  div.textContent = text;
+  div.dataset.wx = x; div.dataset.wy = y; div.dataset.wz = z;
+  document.body.appendChild(div);
+  return div;
+}
+const labelNorth = makeLabel('🏁 DESTINATION (North Bank)', '#58CC02', 0, 1.5, -9);
+const labelSouth = makeLabel('📍 START (South Bank)', '#FF9600', 0, 1.5, 9);
+
+// ── River ──────────────────────────────────────────────────
+let riverWidth = 10;
+let riverMesh;
+
+function buildRiver() {
+  if (riverMesh) scene.remove(riverMesh);
+  const geo = new THREE.BoxGeometry(32, 0.3, riverWidth);
+  const mat = new THREE.MeshLambertMaterial({
+    color: 0x1565c0, transparent: true, opacity: 0.72
+  });
+  riverMesh = new THREE.Mesh(geo, mat);
+  riverMesh.position.y = 0.01;
+  riverMesh.receiveShadow = true;
+  scene.add(riverMesh);
+}
+buildRiver();
+
+// River shimmer (grid lines)
+{
+  const geoGrid = new THREE.PlaneGeometry(32, 10, 16, 5);
+  const matGrid = new THREE.MeshBasicMaterial({
+    color: 0x64b5f6, wireframe: true, transparent: true, opacity: 0.08
+  });
+  const grid = new THREE.Mesh(geoGrid, matGrid);
+  grid.rotation.x = -Math.PI / 2;
+  grid.position.y = 0.18;
+  scene.add(grid);
+}
+
+// ── Water particles ────────────────────────────────────────
+const PARTICLE_COUNT = 400;
+const particleGeo = new THREE.BufferGeometry();
+const pPos = new Float32Array(PARTICLE_COUNT * 3);
+const pPhase = new Float32Array(PARTICLE_COUNT);
+
+for (let i = 0; i < PARTICLE_COUNT; i++) {
+  pPos[i*3]   = (Math.random() - 0.5) * 32;
+  pPos[i*3+1] = 0.25;
+  pPos[i*3+2] = (Math.random() - 0.5) * 8;
+  pPhase[i]   = Math.random() * Math.PI * 2;
+}
+particleGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+const particleMat = new THREE.PointsMaterial({
+  color: 0x90caf9, size: 0.12, transparent: true, opacity: 0.8, sizeAttenuation: true
+});
+const particleSystem = new THREE.Points(particleGeo, particleMat);
+scene.add(particleSystem);
+
+// ── Trees ──────────────────────────────────────────────────
+const treeGroup = new THREE.Group();
+function makeTree(x, z) {
+  const trunk = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.12, 0.18, 1.2, 6),
+    new THREE.MeshLambertMaterial({ color: 0x5d4037 })
+  );
+  trunk.position.set(x, 0.6, z);
+  trunk.castShadow = true;
+
+  const top = new THREE.Mesh(
+    new THREE.ConeGeometry(0.7 + Math.random()*0.4, 1.8 + Math.random(), 7),
+    new THREE.MeshLambertMaterial({ color: 0x388e3c - Math.floor(Math.random()*0x101010) })
+  );
+  top.position.set(x, 2.1, z);
+  top.castShadow = true;
+
+  treeGroup.add(trunk, top);
+}
+for (let i = -14; i <= 14; i += 2.8) {
+  makeTree(i, -12 - Math.random()*1.5);
+  makeTree(i + 1.4, 12 + Math.random()*1.5);
+}
+scene.add(treeGroup);
+
+// ── Boat ──────────────────────────────────────────────────
+const boatGroup = new THREE.Group();
+
+const boatBody = new THREE.Mesh(
+  new THREE.BoxGeometry(0.8, 0.3, 1.4),
+  new THREE.MeshLambertMaterial({ color: 0xff7043 })
+);
+boatBody.castShadow = true;
+
+const boatMast = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.04, 0.04, 1.5, 6),
+  new THREE.MeshLambertMaterial({ color: 0xffd54f })
+);
+boatMast.position.y = 0.9;
+
+const boatFlag = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 0.3, 0.02),
+  new THREE.MeshLambertMaterial({ color: 0xff4b4b, side: THREE.DoubleSide })
+);
+boatFlag.position.set(0.28, 1.55, 0);
+
+boatGroup.add(boatBody, boatMast, boatFlag);
+scene.add(boatGroup);
+
+// ── Trail path ─────────────────────────────────────────────
+const MAX_TRAIL = 500;
+const trailPositions = new Float32Array(MAX_TRAIL * 3);
+const trailGeo = new THREE.BufferGeometry();
+trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
+trailGeo.setDrawRange(0, 0);
+const trailMat = new THREE.LineBasicMaterial({ color: 0xffd900, linewidth: 2, transparent: true, opacity: 0.8 });
+const trail = new THREE.Line(trailGeo, trailMat);
+trail.frustumCulled = false;
+scene.add(trail);
+let trailCount = 0;
+
+// ── Arrows (velocity vectors) ──────────────────────────────
+function makeArrow(color, length=3) {
+  const arrow = new THREE.ArrowHelper(
+    new THREE.Vector3(0,0,-1), new THREE.Vector3(0,0,0),
+    length, color, length*0.25, length*0.12
+  );
+  scene.add(arrow);
+  return arrow;
+}
+const arrowSwim   = makeArrow(0x58CC02, 2.5);
+const arrowRiver  = makeArrow(0x1CB0F6, 3.0);
+const arrowResult = makeArrow(0xFFD900, 3.5);
+
+// Arrow labels
+const lblSwim   = makeLabel('🟢 Swimmer', '#58CC02', 0, 2, 0);
+const lblRiver  = makeLabel('🔵 Current', '#1CB0F6', 0, 2, 0);
+const lblResult = makeLabel('🟡 Resultant', '#FFD900', 0, 2, 0);
+
+// ══════════════════════════════════════════════════════════
+// PHYSICS STATE
+// ══════════════════════════════════════════════════════════
+let state = {
+  vs: 3,        // swimmer speed m/s
+  vr: 4,        // river current m/s
+  angleDeg: 90, // boat angle from east (90 = north)
+  width: 10,    // river width
+  running: false,
+  t: 0,
+  boatX: 0,
+  boatZ: 0,
+  startZ: 0,
+  endZ: 0
+};
+
+function getVectors() {
+  const a = state.angleDeg * Math.PI / 180;
+  const vx = state.vs * Math.cos(a);    // east component of swimmer
+  const vz = -state.vs * Math.sin(a);   // north component (negative Z)
+  const rx = state.vr;                  // river goes east
+  const rz = 0;
+  const resx = vx + rx;
+  const resz = vz + rz;
+  const resSpeed = Math.sqrt(resx*resx + resz*resz);
+  return { vx, vz, rx, rz, resx, resz, resSpeed };
+}
+
+function updatePhysicsUI() {
+  const v = getVectors();
+  const crossComponent = Math.abs(v.vz); // component crossing river
+  const timeToCross = crossComponent > 0.001 ? state.width / crossComponent : Infinity;
+  const drift = v.resx * timeToCross;
+  const canGoStraight = state.vs > state.vr;
+  const optimalAngle = canGoStraight
+    ? (90 + Math.asin(state.vr / state.vs) * 180 / Math.PI).toFixed(1)
+    : 'N/A';
+
+  document.getElementById('f-time').textContent   = isFinite(timeToCross) ? timeToCross.toFixed(1)+' s' : '∞';
+  document.getElementById('f-drift').textContent  = isFinite(drift) ? drift.toFixed(1)+' m' : '∞';
+  document.getElementById('f-speed').textContent  = v.resSpeed.toFixed(2)+' m/s';
+  document.getElementById('f-straight').textContent = canGoStraight ? `angle ${optimalAngle}°` : '❌ impossible';
+
+  document.getElementById('r-vs').textContent    = state.vs+' m/s';
+  document.getElementById('r-vr').textContent    = state.vr+' m/s';
+  document.getElementById('r-res').textContent   = v.resSpeed.toFixed(2)+' m/s';
+  document.getElementById('r-angle').textContent = state.angleDeg+'°';
+
+  document.getElementById('vs-val').textContent    = state.vs;
+  document.getElementById('vr-val').textContent    = state.vr;
+  document.getElementById('angle-val').textContent = state.angleDeg;
+  document.getElementById('width-val').textContent = state.width;
+}
+
+function updateArrows() {
+  const v = getVectors();
+  const bx = boatGroup.position.x;
+  const by = 0.8;
+  const bz = boatGroup.position.z;
+  const base = new THREE.Vector3(bx, by, bz);
+
+  const scale = 1.0;
+  const swimDir = new THREE.Vector3(v.vx, 0, v.vz).normalize();
+  const riverDir = new THREE.Vector3(1, 0, 0);
+  const resDir   = new THREE.Vector3(v.resx, 0, v.resz).normalize();
+
+  arrowSwim.position.copy(base);
+  arrowSwim.setDirection(swimDir.length() > 0.001 ? swimDir : new THREE.Vector3(0,0,-1));
+  arrowSwim.setLength(state.vs * scale, state.vs * scale * 0.25, state.vs * scale * 0.12);
+
+  arrowRiver.position.copy(base);
+  arrowRiver.setDirection(riverDir);
+  arrowRiver.setLength(state.vr * scale * 0.7, state.vr * scale * 0.7 * 0.25, state.vr * scale * 0.7 * 0.12);
+
+  arrowResult.position.copy(base);
+  arrowResult.setDirection(resDir.length() > 0.001 ? resDir : new THREE.Vector3(0,0,-1));
+  arrowResult.setLength(v.resSpeed * scale * 0.75, v.resSpeed * scale * 0.75 * 0.25, v.resSpeed * scale * 0.75 * 0.12);
+
+  [arrowSwim, arrowRiver, arrowResult].forEach(a => { a.visible = layers.vectors; });
+}
+
+// ══════════════════════════════════════════════════════════
+// SIMULATION
+// ══════════════════════════════════════════════════════════
+function startSim() {
+  if (state.running) return;
+  state.running = true;
+  state.t = 0;
+  trailCount = 0;
+  trailGeo.setDrawRange(0, 0);
+
+  state.startZ = state.width / 2;
+  state.endZ   = -state.width / 2;
+  boatGroup.position.set(0, 0.25, state.startZ);
+  document.getElementById('btn-play').textContent = '⏸ Pause';
+}
+
+function resetSim() {
+  state.running = false;
+  state.t = 0;
+  trailCount = 0;
+  trailGeo.setDrawRange(0, 0);
+  boatGroup.position.set(0, 0.25, state.width / 2);
+  updateArrows();
+  document.getElementById('btn-play').textContent = '▶ Start';
+}
+
+// ══════════════════════════════════════════════════════════
+// PROJECT 3D → 2D for HTML labels
+// ══════════════════════════════════════════════════════════
+const _v3 = new THREE.Vector3();
+function project(wx, wy, wz) {
+  _v3.set(wx, wy, wz);
+  _v3.project(camera);
+  return {
+    x: (_v3.x * 0.5 + 0.5) * window.innerWidth,
+    y: (-_v3.y * 0.5 + 0.5) * window.innerHeight
+  };
+}
+
+function updateLabelPos(el, wx, wy, wz) {
+  const p = project(wx, wy, wz);
+  el.style.left = p.x - el.offsetWidth/2 + 'px';
+  el.style.top  = p.y - el.offsetHeight/2 + 'px';
+}
+
+// ══════════════════════════════════════════════════════════
+// ANIMATION LOOP
+// ══════════════════════════════════════════════════════════
+const clock = new THREE.Clock();
+let animTime = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+  animTime += dt;
+
+  controls.update();
+
+  // ── Water particles ────────────────────────────────────
+  if (layers.particles) {
+    particleSystem.visible = true;
+    const pa = particleGeo.attributes.position;
+    const halfW = state.width / 2;
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      pa.array[i*3]   += state.vr * dt * 0.4;
+      pa.array[i*3+1]  = 0.2 + Math.sin(animTime*2 + pPhase[i]) * 0.03;
+      // wrap X
+      if (pa.array[i*3] > 16) pa.array[i*3] = -16;
+      // keep within river Z bounds
+      if (pa.array[i*3+2] < -halfW) pa.array[i*3+2] = halfW;
+      if (pa.array[i*3+2] > halfW)  pa.array[i*3+2] = -halfW;
+    }
+    pa.needsUpdate = true;
+  } else {
+    particleSystem.visible = false;
+  }
+
+  // ── Boat wave bob ──────────────────────────────────────
+  boatGroup.position.y = 0.25 + Math.sin(animTime * 1.8) * 0.04;
+
+  // ── Simulation ────────────────────────────────────────
+  if (state.running) {
+    const v = getVectors();
+    const SIM_SPEED = 1.0;
+
+    boatGroup.position.x += v.resx * dt * SIM_SPEED;
+    boatGroup.position.z += v.resz * dt * SIM_SPEED;
+
+    // Point boat in direction of travel
+    if (Math.abs(v.resx) > 0.01 || Math.abs(v.resz) > 0.01) {
+      boatGroup.rotation.y = Math.atan2(v.resx, -v.resz);
+    }
+
+    state.t += dt * SIM_SPEED;
+
+    // Trail
+    if (trailCount < MAX_TRAIL) {
+      const idx = trailCount * 3;
+      trailPositions[idx]   = boatGroup.position.x;
+      trailPositions[idx+1] = 0.4;
+      trailPositions[idx+2] = boatGroup.position.z;
+      trailCount++;
+      trailGeo.setDrawRange(0, trailCount);
+      trailGeo.attributes.position.needsUpdate = true;
+    }
+
+    trail.visible = layers.path;
+
+    // Check if crossed
+    if (boatGroup.position.z <= state.endZ) {
+      state.running = false;
+      document.getElementById('btn-play').textContent = '▶ Start';
+
+      const drift = Math.abs(boatGroup.position.x).toFixed(1);
+      const timeTaken = state.t.toFixed(1);
+      showToast(`Crossed in ${timeTaken}s`, `Drifted ${drift}m downstream 📍`);
+    }
+  }
+
+  updateArrows();
+
+  // ── Reconstruct river if width changed ─────────────────
+  riverMesh.scale.z = state.width / 10;
+
+  // ── Label positions ────────────────────────────────────
+  updateLabelPos(labelNorth, 0, 1.5, -state.width/2 - 4);
+  updateLabelPos(labelSouth, 0, 1.5,  state.width/2 + 4);
+
+  // Arrow labels
+  const bpos = boatGroup.position;
+  updateLabelPos(lblSwim,   bpos.x + getVectors().vx * 1.2, 2.5, bpos.z + getVectors().vz * 1.2);
+  updateLabelPos(lblRiver,  bpos.x + 2, 2.5, bpos.z);
+  updateLabelPos(lblResult, bpos.x + getVectors().resx * 0.8, 3.5, bpos.z + getVectors().resz * 0.8);
+
+  [lblSwim, lblRiver, lblResult].forEach(l => { l.style.opacity = layers.vectors ? '1' : '0'; });
+  treeGroup.visible = layers.trees;
+
+  updatePhysicsUI();
+
+  renderer.render(scene, camera);
+}
+
+// ══════════════════════════════════════════════════════════
+// UI CONTROLS
+// ══════════════════════════════════════════════════════════
+document.getElementById('vs').addEventListener('input', e => {
+  state.vs = parseFloat(e.target.value);
+  if (!state.running) resetSim();
+});
+document.getElementById('vr').addEventListener('input', e => {
+  state.vr = parseFloat(e.target.value);
+  if (!state.running) resetSim();
+});
+document.getElementById('angle').addEventListener('input', e => {
+  state.angleDeg = parseInt(e.target.value);
+  if (!state.running) resetSim();
+});
+document.getElementById('rwidth').addEventListener('input', e => {
+  state.width = parseInt(e.target.value);
+  riverWidth = state.width;
+  // Reposition banks
+  if (!state.running) resetSim();
+});
+
+document.getElementById('btn-play').addEventListener('click', () => {
+  if (state.running) { state.running = false; document.getElementById('btn-play').textContent = '▶ Resume'; }
+  else startSim();
+});
+document.getElementById('btn-reset').addEventListener('click', resetSim);
+
+document.getElementById('btn-optimal').addEventListener('click', () => {
+  if (state.vs > state.vr) {
+    // For straight path: aim upstream at angle = 90 + arcsin(vr/vs) from east
+    const optAngle = 90 + Math.round(Math.asin(state.vr / state.vs) * 180 / Math.PI);
+    state.angleDeg = Math.min(170, optAngle);
+    document.getElementById('angle').value = state.angleDeg;
+    showToast('🎯 Optimal angle set!', `${state.angleDeg}° — straight across path`);
+  } else {
+    // Minimum drift when vr > vs
+    const optAngle = Math.round(Math.acos(state.vs / state.vr) * 180 / Math.PI);
+    state.angleDeg = 90 + optAngle;
+    document.getElementById('angle').value = state.angleDeg;
+    showToast('⚠️ River too fast!', 'Set to minimum drift angle');
+  }
+  if (!state.running) resetSim();
+});
+
+window.toggleLayer = function(name, el) {
+  layers[name] = !layers[name];
+  el.classList.toggle('on');
+};
+
+window.setCam = function(mode) {
+  if (mode === 'top') {
+    camera.position.set(0, 40, 0.01);
+    controls.target.set(0, 0, 0);
+  } else if (mode === 'side') {
+    camera.position.set(30, 8, 0);
+    controls.target.set(0, 0, 0);
+  } else {
+    camera.position.set(0, 18, 26);
+    controls.target.set(0, 0, 0);
+  }
+  controls.update();
+};
+
+function showToast(h, p) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-h').textContent = h;
+  document.getElementById('toast-p').textContent = p;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Init
+resetSim();
+animate();
+</script>
+</body>
+</html>
