@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fennec Fox — Duolingo Character</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #131523;
+  --card: #1e2235;
+  --green: #58CC02;
+  --blue: #1CB0F6;
+  --purple: #CE82FF;
+  --yellow: #FFD900;
+  --red: #FF4B4B;
+  --orange: #FF9600;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  min-height: 100vh;
+  font-family: 'Nunito', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+  gap: 0;
+}
+
+/* ── Stage ── */
+#stage {
+  position: relative;
+  width: 340px;
+  height: 420px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* ── Ground ── */
+.ground {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  height: 28px;
+  background: linear-gradient(180deg, #2E7D32, #1B5E20);
+  border-radius: 50%;
+  filter: blur(2px);
+  opacity: 0.6;
+}
+
+/* ── Shadow under fox ── */
+.fox-shadow {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 18px;
+  background: rgba(0,0,0,0.35);
+  border-radius: 50%;
+  filter: blur(6px);
+  transition: all 0.3s ease;
+}
+
+/* ── Fox SVG ── */
+#fox-svg {
+  position: absolute;
+  bottom: 22px;
+  width: 260px;
+  height: 360px;
+  cursor: pointer;
+  transform-origin: bottom center;
+  transition: filter 0.3s;
+}
+#fox-svg:hover { filter: drop-shadow(0 0 20px rgba(255,200,80,0.4)); }
+
+/* ── Particle container ── */
+#particles {
+  position: absolute;
+  top: 0; left: 0;
+  width: 340px;
+  height: 420px;
+  pointer-events: none;
+  overflow: hidden;
+}
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  animation: particleFly 0.9s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes particleFly {
+  0%   { opacity: 1; transform: translate(0,0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0); }
+}
+
+/* ── Speech bubble ── */
+#bubble {
+  position: absolute;
+  top: 10px;
+  right: -20px;
+  background: white;
+  color: #333;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 10px 16px;
+  border-radius: 20px;
+  border-bottom-right-radius: 4px;
+  max-width: 160px;
+  text-align: center;
+  line-height: 1.4;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  opacity: 0;
+  transform: scale(0.8) translateY(8px);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+#bubble.show {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+#bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  right: 14px;
+  border: 6px solid transparent;
+  border-top-color: white;
+}
+
+/* ── State buttons ── */
+#controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  padding: 0 20px 20px;
+  max-width: 420px;
+}
+
+.state-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--card);
+  border: 2.5px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 12px 14px;
+  color: white;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  min-width: 80px;
+}
+.state-btn:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.3); }
+.state-btn:active { transform: scale(0.93); }
+.state-btn .icon { font-size: 22px; }
+.state-btn.active { border-color: var(--yellow); background: rgba(255,217,0,0.12); }
+
+/* ── Score display ── */
+#score-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 24px;
+  background: var(--card);
+  border-radius: 99px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.score-item { font-size: 15px; font-weight: 800; }
+
+/* ── Title ── */
+#fox-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--yellow);
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+#fox-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+/* ════════════════════ FOX ANIMATIONS ════════════════════ */
+
+/* IDLE — gentle float */
+@keyframes foxIdle {
+  0%,100% { transform: translateY(0) rotate(0deg); }
+  30%      { transform: translateY(-7px) rotate(0.8deg); }
+  70%      { transform: translateY(-5px) rotate(-0.5deg); }
+}
+
+/* CELEBRATE — big jump + wiggle */
+@keyframes foxCelebrate {
+  0%   { transform: translateY(0) scale(1) rotate(0); }
+  15%  { transform: translateY(-30px) scale(1.12) rotate(-6deg); }
+  30%  { transform: translateY(-26px) scale(1.1) rotate(6deg); }
+  45%  { transform: translateY(-32px) scale(1.14) rotate(-4deg); }
+  60%  { transform: translateY(-18px) scale(1.07) rotate(3deg); }
+  78%  { transform: translateY(-8px) scale(1.03) rotate(-1deg); }
+  100% { transform: translateY(0) scale(1) rotate(0); }
+}
+
+/* WRONG — shake */
+@keyframes foxWrong {
+  0%,100% { transform: translateX(0) rotate(0); }
+  12%     { transform: translateX(-12px) rotate(-4deg); }
+  25%     { transform: translateX(12px) rotate(4deg); }
+  37%     { transform: translateX(-10px) rotate(-3deg); }
+  50%     { transform: translateX(10px) rotate(3deg); }
+  65%     { transform: translateX(-6px) rotate(-2deg); }
+  80%     { transform: translateX(6px) rotate(2deg); }
+}
+
+/* THINK — head tilt */
+@keyframes foxThink {
+  0%,100% { transform: rotate(0) translateX(0); }
+  40%     { transform: rotate(-9deg) translateX(-5px); }
+  70%     { transform: rotate(-7deg) translateX(-4px); }
+}
+
+/* EXCITED — fast bounces */
+@keyframes foxExcited {
+  0%,100% { transform: translateY(0) scale(1); }
+  20%     { transform: translateY(-18px) scale(1.08); }
+  40%     { transform: translateY(-4px) scale(0.97); }
+  60%     { transform: translateY(-16px) scale(1.06); }
+  80%     { transform: translateY(-3px) scale(0.98); }
+}
+
+/* WAVE — lean and wave */
+@keyframes foxWave {
+  0%,100% { transform: rotate(0) translateX(0); }
+  25%     { transform: rotate(5deg) translateX(4px); }
+  50%     { transform: rotate(3deg) translateX(3px); }
+  75%     { transform: rotate(6deg) translateX(5px); }
+}
+
+/* EAR wiggle animations */
+@keyframes earLeftWiggle {
+  0%,100% { transform: rotate(0deg); transform-origin: 88% 95%; }
+  25%      { transform: rotate(-8deg); transform-origin: 88% 95%; }
+  75%      { transform: rotate(5deg); transform-origin: 88% 95%; }
+}
+@keyframes earRightWiggle {
+  0%,100% { transform: rotate(0deg); transform-origin: 12% 95%; }
+  25%      { transform: rotate(8deg); transform-origin: 12% 95%; }
+  75%      { transform: rotate(-5deg); transform-origin: 12% 95%; }
+}
+@keyframes earCelebrate {
+  0%,100% { transform: rotate(0) scaleX(1); }
+  30%      { transform: rotate(-15deg) scaleX(1.08); }
+  60%      { transform: rotate(12deg) scaleX(1.05); }
+}
+@keyframes earCelebrateR {
+  0%,100% { transform: rotate(0) scaleX(1); }
+  30%      { transform: rotate(15deg) scaleX(1.08); }
+  60%      { transform: rotate(-12deg) scaleX(1.05); }
+}
+@keyframes earDroop {
+  0%,100% { transform: rotate(0); }
+  50%      { transform: rotate(20deg); transform-origin: 88% 95%; }
+}
+@keyframes earDroopR {
+  0%,100% { transform: rotate(0); }
+  50%      { transform: rotate(-20deg); transform-origin: 12% 95%; }
+}
+
+/* Eye blink */
+@keyframes blink {
+  0%,96%,100% { transform: scaleY(1); }
+  98%          { transform: scaleY(0.05); }
+}
+
+/* Paw wave */
+@keyframes pawWave {
+  0%,100% { transform: rotate(0) translateY(0); }
+  30%      { transform: rotate(-25deg) translateY(-10px); }
+  60%      { transform: rotate(-20deg) translateY(-8px); }
+  80%      { transform: rotate(-28deg) translateY(-12px); }
+}
+
+/* Shadow shrink when jumping */
+@keyframes shadowJump {
+  0%,100% { transform: translateX(-50%) scaleX(1); opacity: 0.35; }
+  40%      { transform: translateX(-50%) scaleX(0.55); opacity: 0.15; }
+}
+
+/* Apply animation classes */
+.state-idle      { animation: foxIdle 2.8s ease-in-out infinite; }
+.state-celebrate { animation: foxCelebrate 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.state-wrong     { animation: foxWrong 0.55s ease-out; }
+.state-think     { animation: foxThink 2s ease-in-out infinite; }
+.state-excited   { animation: foxExcited 0.5s ease-in-out infinite; }
+.state-wave      { animation: foxWave 0.7s ease-in-out infinite; }
+
+.ear-l-idle       { animation: earLeftWiggle 3.5s ease-in-out infinite; }
+.ear-r-idle       { animation: earRightWiggle 3.5s ease-in-out infinite 0.4s; }
+.ear-l-celebrate  { animation: earCelebrate 0.9s ease-in-out; }
+.ear-r-celebrate  { animation: earCelebrateR 0.9s ease-in-out; }
+.ear-l-wrong      { animation: earDroop 0.55s ease-out; }
+.ear-r-wrong      { animation: earDroopR 0.55s ease-out; }
+.ear-l-think      { animation: earLeftWiggle 2s ease-in-out infinite; }
+.ear-r-think      { animation: none; }
+.ear-l-excited    { animation: earLeftWiggle 0.4s ease-in-out infinite; }
+.ear-r-excited    { animation: earRightWiggle 0.4s ease-in-out infinite; }
+
+.eyes-blink { animation: blink 4s ease-in-out infinite; transform-origin: center 48%; }
+.paw-wave-anim { animation: pawWave 0.6s ease-in-out infinite; transform-origin: center bottom; }
+
+.shadow-jump { animation: shadowJump 0.9s ease-out; }
+</style>
+</head>
+<body>
+
+<div id="fox-title">🦊 Fenny</div>
+<div id="fox-sub">Click Fenny or press a button below</div>
+
+<!-- Score bar -->
+<div id="score-bar">
+  <span class="score-item">⚡ <span id="xp">0</span> XP</span>
+  <span class="score-item">🔥 <span id="streak">0</span> streak</span>
+  <span class="score-item">❤️ <span id="lives">5</span></span>
+</div>
+
+<!-- Stage -->
+<div id="stage">
+  <div class="ground"></div>
+  <div class="fox-shadow" id="fox-shadow"></div>
+  <div id="particles"></div>
+  <div id="bubble">Watch me! 👀</div>
+
+  <!-- THE FENNEC FOX SVG -->
+  <svg id="fox-svg" viewBox="0 0 300 380" class="state-idle" onclick="onFoxClick()">
+    <defs>
+      <!-- Body gradient -->
+      <radialGradient id="bodyGrad" cx="45%" cy="40%" r="55%">
+        <stop offset="0%"   stop-color="#FFFAF0"/>
+        <stop offset="100%" stop-color="#F0D090"/>
+      </radialGradient>
+      <!-- Head gradient -->
+      <radialGradient id="headGrad" cx="45%" cy="38%" r="55%">
+        <stop offset="0%"   stop-color="#FFFCF0"/>
+        <stop offset="100%" stop-color="#F5E0A0"/>
+      </radialGradient>
+      <!-- Ear gradient -->
+      <radialGradient id="earGrad" cx="50%" cy="80%" r="65%">
+        <stop offset="0%"   stop-color="#F5E0A0"/>
+        <stop offset="100%" stop-color="#E0C070"/>
+      </radialGradient>
+      <!-- Eye gradient -->
+      <radialGradient id="eyeGrad" cx="38%" cy="35%" r="60%">
+        <stop offset="0%"   stop-color="#2a1800"/>
+        <stop offset="100%" stop-color="#0a0500"/>
+      </radialGradient>
+    </defs>
+
+    <!-- ══ LEFT EAR (behind head) ══ -->
+    <g id="ear-left" class="ear-l-idle">
+      <!-- Outer ear -->
+      <path d="M 82 160
+               Q 18 105 46 18
+               Q 70 -8 118 32
+               Q 138 80 122 158 Z"
+            fill="url(#earGrad)" stroke="#C8A050" stroke-width="3"
+            stroke-linejoin="round"/>
+      <!-- Inner ear (pink) -->
+      <path d="M 90 150
+               Q 42 102 62 30
+               Q 80 8 108 42
+               Q 122 84 114 148 Z"
+            fill="#FFB3C1" opacity="0.85"/>
+      <!-- Inner ear highlight -->
+      <path d="M 94 140
+               Q 58 100 72 40
+               Q 84 18 104 46
+               Q 114 78 108 138 Z"
+            fill="rgba(255,200,210,0.4)"/>
+    </g>
+
+    <!-- ══ RIGHT EAR (behind head) ══ -->
+    <g id="ear-right" class="ear-r-idle">
+      <!-- Outer ear -->
+      <path d="M 218 160
+               Q 282 105 254 18
+               Q 230 -8 182 32
+               Q 162 80 178 158 Z"
+            fill="url(#earGrad)" stroke="#C8A050" stroke-width="3"
+            stroke-linejoin="round"/>
+      <!-- Inner ear -->
+      <path d="M 210 150
+               Q 258 102 238 30
+               Q 220 8 192 42
+               Q 178 84 186 148 Z"
+            fill="#FFB3C1" opacity="0.85"/>
+      <!-- Inner ear highlight -->
+      <path d="M 206 140
+               Q 242 100 228 40
+               Q 216 18 196 46
+               Q 186 78 192 138 Z"
+            fill="rgba(255,200,210,0.4)"/>
+    </g>
+
+    <!-- ══ BODY ══ -->
+    <ellipse cx="150" cy="305" rx="74" ry="66"
+             fill="url(#bodyGrad)" stroke="#C8A050" stroke-width="3"/>
+    <!-- Body shading -->
+    <ellipse cx="150" cy="328" rx="55" ry="38"
+             fill="rgba(200,160,70,0.08)"/>
+    <!-- Belly patch -->
+    <ellipse cx="150" cy="300" rx="42" ry="48"
+             fill="rgba(255,255,255,0.3)"/>
+
+    <!-- ══ LEFT ARM ══ -->
+    <g id="arm-left">
+      <ellipse cx="88" cy="305" rx="24" ry="17"
+               fill="url(#bodyGrad)" stroke="#C8A050" stroke-width="2.5"/>
+      <!-- Paw toes -->
+      <ellipse cx="72"  cy="314" rx="6" ry="4.5" fill="#E8C870" stroke="#C8A050" stroke-width="1.5"/>
+      <ellipse cx="82"  cy="318" rx="6" ry="4.5" fill="#E8C870" stroke="#C8A050" stroke-width="1.5"/>
+      <ellipse cx="93"  cy="319" rx="6" ry="4.5" fill="#E8C870" stroke="#C8A050" stroke-width="1.5"/>
+    </g>
+
+    <!-- ══ RIGHT ARM (wave paw) ══ -->
+    <g id="arm-right">
+      <ellipse cx="212" cy="305" rx="24" ry="17"
+               fill="url(#bodyGrad)" stroke="#C8A050" stroke-width="2.5"/>
+      <!-- Paw toes -->
+      <ellipse cx="207" cy="319" rx="6" ry="4.5" fill="#E8C870" stroke="#C8A050" stroke-width="1.5"/>
+      <ellipse cx="218" cy="318" rx="6" ry="4.5" fill="#E8C870" stroke="#C8A050" stroke-width="1.5"/>
+      <ellipse cx="228" cy="314" rx="6" ry="4.5" fill="#E8C870" stroke="#C8A050" stroke-width="1.5"/>
+    </g>
+
+    <!-- ══ FEET ══ -->
+    <ellipse cx="115" cy="364" rx="30" ry="13"
+             fill="#E8C870" stroke="#C8A050" stroke-width="2"/>
+    <ellipse cx="185" cy="364" rx="30" ry="13"
+             fill="#E8C870" stroke="#C8A050" stroke-width="2"/>
+    <!-- Toe lines -->
+    <line x1="100" y1="368" x2="100" y2="358" stroke="#C8A050" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="115" y1="370" x2="115" y2="359" stroke="#C8A050" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="130" y1="368" x2="130" y2="358" stroke="#C8A050" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="170" y1="368" x2="170" y2="358" stroke="#C8A050" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="185" y1="370" x2="185" y2="359" stroke="#C8A050" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="200" y1="368" x2="200" y2="358" stroke="#C8A050" stroke-width="1.5" stroke-linecap="round"/>
+
+    <!-- ══ HEAD ══ -->
+    <ellipse cx="150" cy="185" rx="80" ry="76"
+             fill="url(#headGrad)" stroke="#C8A050" stroke-width="3"/>
+    <!-- Head shading -->
+    <ellipse cx="150" cy="218" rx="62" ry="42"
+             fill="rgba(200,160,70,0.05)"/>
+
+    <!-- ══ EYEBROWS ══ -->
+    <path id="brow-left" d="M 100 150 Q 118 142 136 150"
+          stroke="#A07830" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path id="brow-right" d="M 164 150 Q 182 142 200 150"
+          stroke="#A07830" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+    <!-- ══ EYE WHITES ══ -->
+    <g class="eyes-blink" id="eyes-group">
+      <ellipse cx="118" cy="182" rx="23" ry="25"
+               fill="white" stroke="#C8A050" stroke-width="2"/>
+      <ellipse cx="182" cy="182" rx="23" ry="25"
+               fill="white" stroke="#C8A050" stroke-width="2"/>
+
+      <!-- Iris -->
+      <circle cx="120" cy="184" r="17" fill="url(#eyeGrad)"/>
+      <circle cx="184" cy="184" r="17" fill="url(#eyeGrad)"/>
+
+      <!-- Pupil highlight (big) -->
+      <circle cx="113" cy="177" r="6"   fill="white"/>
+      <circle cx="177" cy="177" r="6"   fill="white"/>
+      <!-- Pupil highlight (small) -->
+      <circle cx="125" cy="190" r="3"   fill="rgba(255,255,255,0.35)"/>
+      <circle cx="189" cy="190" r="3"   fill="rgba(255,255,255,0.35)"/>
+    </g>
+
+    <!-- ══ CHEEK BLUSH ══ -->
+    <ellipse cx="90"  cy="210" rx="20" ry="14" fill="rgba(255,140,140,0.22)"/>
+    <ellipse cx="210" cy="210" rx="20" ry="14" fill="rgba(255,140,140,0.22)"/>
+
+    <!-- ══ NOSE ══ -->
+    <path d="M 142 213 Q 150 220 158 213 Q 154 208 150 207 Q 146 208 142 213 Z"
+          fill="#3D1C00"/>
+    <!-- Nose shine -->
+    <ellipse cx="146" cy="210" rx="3.5" ry="2.5" fill="rgba(255,255,255,0.28)"/>
+
+    <!-- ══ MOUTH ══ -->
+    <path id="mouth-path"
+          d="M 133 228 Q 150 244 167 228"
+          stroke="#C8A050" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+    <!-- ══ WHISKERS ══ -->
+    <!-- Left side -->
+    <line x1="52"  y1="212" x2="128" y2="218" stroke="rgba(160,120,60,0.5)" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="48"  y1="222" x2="128" y2="222" stroke="rgba(160,120,60,0.5)" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="52"  y1="232" x2="128" y2="226" stroke="rgba(160,120,60,0.5)" stroke-width="1.8" stroke-linecap="round"/>
+    <!-- Right side -->
+    <line x1="248" y1="212" x2="172" y2="218" stroke="rgba(160,120,60,0.5)" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="252" y1="222" x2="172" y2="222" stroke="rgba(160,120,60,0.5)" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="248" y1="232" x2="172" y2="226" stroke="rgba(160,120,60,0.5)" stroke-width="1.8" stroke-linecap="round"/>
+
+    <!-- ══ TAIL (peeking behind body) ══ -->
+    <path d="M 200 340 Q 248 320 252 360 Q 256 385 220 375 Q 195 368 200 340 Z"
+          fill="#E8C870" stroke="#C8A050" stroke-width="2"/>
+    <!-- Tail tip -->
+    <ellipse cx="240" cy="370" rx="16" ry="10"
+             fill="white" stroke="#C8A050" stroke-width="1.5"/>
+
+    <!-- ══ ITEM: Book (default) ══ -->
+    <g id="item-book">
+      <rect x="114" y="272" width="42" height="32" rx="3"
+            fill="#1CB0F6" stroke="#0090D0" stroke-width="2"/>
+      <rect x="114" y="272" width="6"  height="32" rx="2"
+            fill="#0090D0"/>
+      <line x1="124" y1="280" x2="150" y2="280" stroke="white" stroke-width="1.5" opacity="0.6"/>
+      <line x1="124" y1="286" x2="150" y2="286" stroke="white" stroke-width="1.5" opacity="0.6"/>
+      <line x1="124" y1="292" x2="142" y2="292" stroke="white" stroke-width="1.5" opacity="0.6"/>
+    </g>
+
+    <!-- ══ STARS (hidden, show on celebrate) ══ -->
+    <g id="stars" opacity="0">
+      <text x="50"  y="80"  font-size="22" fill="#FFD900">⭐</text>
+      <text x="220" y="70"  font-size="18" fill="#FFD900">✨</text>
+      <text x="140" y="55"  font-size="26" fill="#FFD900">🌟</text>
+      <text x="38"  y="140" font-size="16" fill="#FF9600">✨</text>
+      <text x="240" y="130" font-size="20" fill="#FF9600">⭐</text>
+    </g>
+
+    <!-- ══ SWEAT DROP (hidden, show on wrong) ══ -->
+    <g id="sweat" opacity="0">
+      <path d="M 208 130 Q 215 120 222 130 Q 222 142 215 142 Q 208 142 208 130 Z"
+            fill="#87CEEB" opacity="0.8"/>
+    </g>
+
+    <!-- ══ QUESTION MARK (hidden, show on think) ══ -->
+    <g id="questionmark" opacity="0">
+      <circle cx="225" cy="100" r="22" fill="rgba(206,130,255,0.2)"/>
+      <text x="218" y="108" font-size="24" fill="#CE82FF" font-weight="900">?</text>
+    </g>
+  </svg>
+</div>
+
+<!-- Controls -->
+<div id="controls">
+  <button class="state-btn active" onclick="setState('idle')" id="btn-idle">
+    <span class="icon">😊</span>Idle
+  </button>
+  <button class="state-btn" onclick="setState('celebrate')" id="btn-celebrate">
+    <span class="icon">🎉</span>Correct!
+  </button>
+  <button class="state-btn" onclick="setState('wrong')" id="btn-wrong">
+    <span class="icon">😅</span>Wrong
+  </button>
+  <button class="state-btn" onclick="setState('think')" id="btn-think">
+    <span class="icon">🤔</span>Thinking
+  </button>
+  <button class="state-btn" onclick="setState('excited')" id="btn-excited">
+    <span class="icon">🔥</span>Streak!
+  </button>
+  <button class="state-btn" onclick="setState('wave')" id="btn-wave">
+    <span class="icon">👋</span>Hi!
+  </button>
+</div>
+
+<script>
+// ── State configuration ──────────────────────────────────────
+const states = {
+  idle: {
+    fox:   'state-idle',
+    earL:  'ear-l-idle',
+    earR:  'ear-r-idle',
+    bubble:'Hey! Ready to learn? 📚',
+    mouth: 'M 133 228 Q 150 244 167 228',   // smile
+    browL: 'M 100 150 Q 118 142 136 150',   // normal
+    browR: 'M 164 150 Q 182 142 200 150',
+    stars: 0, sweat: 0, qmark: 0,
+    xp: 0, shadow: false,
+    item: true
+  },
+  celebrate: {
+    fox:   'state-celebrate',
+    earL:  'ear-l-celebrate',
+    earR:  'ear-r-celebrate',
+    bubble:'🎉 Amazing! +15 XP!',
+    mouth: 'M 128 228 Q 150 250 172 228',   // big smile
+    browL: 'M 100 146 Q 118 136 136 146',   // raised happy
+    browR: 'M 164 146 Q 182 136 200 146',
+    stars: 1, sweat: 0, qmark: 0,
+    xp: 15, shadow: true,
+    item: true
+  },
+  wrong: {
+    fox:   'state-wrong',
+    earL:  'ear-l-wrong',
+    earR:  'ear-r-wrong',
+    bubble:'Almost! Try again 💪',
+    mouth: 'M 133 240 Q 150 230 167 240',   // sad mouth
+    browL: 'M 100 155 Q 118 162 136 155',   // sad brows
+    browR: 'M 164 155 Q 182 162 200 155',
+    stars: 0, sweat: 1, qmark: 0,
+    xp: 0, shadow: false,
+    item: true
+  },
+  think: {
+    fox:   'state-think',
+    earL:  'ear-l-think',
+    earR:  '',
+    bubble:'Hmm... let me think 🤔',
+    mouth: 'M 136 232 Q 150 237 162 230',   // slight smile
+    browL: 'M 100 150 Q 118 142 136 150',
+    browR: 'M 164 148 Q 182 138 200 148',   // one brow up
+    stars: 0, sweat: 0, qmark: 1,
+    xp: 0, shadow: false,
+    item: true
+  },
+  excited: {
+    fox:   'state-excited',
+    earL:  'ear-l-excited',
+    earR:  'ear-r-excited',
+    bubble:'🔥 5 in a row! STREAK!',
+    mouth: 'M 128 228 Q 150 250 172 228',
+    browL: 'M 100 144 Q 118 134 136 144',
+    browR: 'M 164 144 Q 182 134 200 144',
+    stars: 1, sweat: 0, qmark: 0,
+    xp: 30, shadow: true,
+    item: true
+  },
+  wave: {
+    fox:   'state-wave',
+    earL:  'ear-l-idle',
+    earR:  'ear-r-idle',
+    bubble:"Hi! I'm Fenny! 🦊",
+    mouth: 'M 133 228 Q 150 244 167 228',
+    browL: 'M 100 148 Q 118 140 136 148',
+    browR: 'M 164 148 Q 182 140 200 148',
+    stars: 0, sweat: 0, qmark: 0,
+    xp: 0, shadow: false,
+    item: true
+  }
+};
+
+let currentState = 'idle';
+let xpTotal = 0;
+let streakCount = 0;
+let lives = 5;
+let clickCount = 0;
+
+function setState(name) {
+  currentState = name;
+  const s = states[name];
+  const fox = document.getElementById('fox-svg');
+  const earL = document.getElementById('ear-left');
+  const earR = document.getElementById('ear-right');
+  const shadow = document.getElementById('fox-shadow');
+  const bubble = document.getElementById('bubble');
+  const mouth = document.getElementById('mouth-path');
+  const browL = document.getElementById('brow-left');
+  const browR = document.getElementById('brow-right');
+  const armR = document.getElementById('arm-right');
+
+  // Remove all state classes
+  const allFox   = ['state-idle','state-celebrate','state-wrong','state-think','state-excited','state-wave'];
+  const allEarL  = ['ear-l-idle','ear-l-celebrate','ear-l-wrong','ear-l-think','ear-l-excited'];
+  const allEarR  = ['ear-r-idle','ear-r-celebrate','ear-r-wrong','ear-r-excited'];
+
+  // Reset animation by cloning (trick to restart CSS animation)
+  function resetAnim(el, classes, newClass) {
+    classes.forEach(c => el.classList.remove(c));
+    if (newClass) {
+      void el.offsetWidth; // reflow trick
+      el.classList.add(newClass);
+    }
+  }
+
+  resetAnim(fox,  allFox,  s.fox);
+  resetAnim(earL, allEarL, s.earL);
+  resetAnim(earR, allEarR, s.earR);
+
+  // Paw wave
+  armR.classList.toggle('paw-wave-anim', name === 'wave');
+
+  // Mouth shape
+  mouth.setAttribute('d', s.mouth);
+  browL.setAttribute('d', s.browL);
+  browR.setAttribute('d', s.browR);
+
+  // Extra elements
+  document.getElementById('stars').setAttribute('opacity', s.stars);
+  document.getElementById('sweat').setAttribute('opacity', s.sweat);
+  document.getElementById('questionmark').setAttribute('opacity', s.qmark);
+
+  // Shadow
+  if (s.shadow) shadow.classList.add('shadow-jump');
+  else          shadow.classList.remove('shadow-jump');
+
+  // Bubble
+  bubble.textContent = s.bubble;
+  bubble.classList.add('show');
+  setTimeout(() => bubble.classList.remove('show'), 2500);
+
+  // XP
+  if (s.xp > 0) {
+    xpTotal += s.xp;
+    document.getElementById('xp').textContent = xpTotal;
+    if (name === 'excited') {
+      streakCount++;
+      document.getElementById('streak').textContent = streakCount;
+    }
+  }
+  if (name === 'wrong' && lives > 0) {
+    lives--;
+    document.getElementById('lives').textContent = '❤️'.repeat(lives) + '🖤'.repeat(5-lives);
+  }
+  if (name === 'celebrate') {
+    spawnParticles();
+  }
+
+  // Update button active state
+  document.querySelectorAll('.state-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('btn-' + name);
+  if (btn) btn.classList.add('active');
+
+  // Auto-return to idle after one-shot animations
+  if (['celebrate','wrong'].includes(name)) {
+    setTimeout(() => setState('idle'), name === 'celebrate' ? 1800 : 1200);
+  }
+}
+
+function onFoxClick() {
+  clickCount++;
+  // Easter eggs based on click count
+  const sequence = ['celebrate','think','excited','wave','wrong'];
+  setState(sequence[clickCount % sequence.length]);
+}
+
+// ── Particle burst ──────────────────────────────────────────
+function spawnParticles() {
+  const container = document.getElementById('particles');
+  const colors = ['#FFD900','#58CC02','#1CB0F6','#FF9600','#CE82FF','#FF4B4B','#fff'];
+  for (let i = 0; i < 28; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 6 + Math.random() * 12;
+    const angle = Math.random() * Math.PI * 2;
+    const dist  = 60 + Math.random() * 120;
+    p.style.cssText = `
+      width:${size}px; height:${size}px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      left:${130 + Math.random()*80}px;
+      top:${80  + Math.random()*80}px;
+      --dx:${Math.cos(angle)*dist}px;
+      --dy:${Math.sin(angle)*dist - 60}px;
+      animation-delay:${Math.random()*0.15}s;
+      animation-duration:${0.7+Math.random()*0.4}s;
+    `;
+    container.appendChild(p);
+    setTimeout(() => p.remove(), 1200);
+  }
+}
+
+// ── Auto blink ───────────────────────────────────────────────
+// Already handled by CSS animation on .eyes-blink
+
+// ── Keyboard shortcuts ───────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key==='1') setState('idle');
+  if (e.key==='2') setState('celebrate');
+  if (e.key==='3') setState('wrong');
+  if (e.key==='4') setState('think');
+  if (e.key==='5') setState('excited');
+  if (e.key==='6') setState('wave');
+});
+
+// Periodic idle ear wiggles
+setInterval(() => {
+  if (currentState === 'idle') {
+    const earL = document.getElementById('ear-left');
+    const earR = document.getElementById('ear-right');
+    earL.classList.remove('ear-l-idle');
+    void earL.offsetWidth;
+    earL.classList.add('ear-l-idle');
+    earR.classList.remove('ear-r-idle');
+    void earR.offsetWidth;
+    earR.classList.add('ear-r-idle');
+  }
+}, 4000);
+</script>
+</body>
+</html>
