@@ -407,18 +407,24 @@ for obj in [root, head, ear_l, ear_r]:
 # ══════════════════════════════════════════════════════════
 # RENDER SETTINGS  (EEVEE — fast, great quality)
 # ══════════════════════════════════════════════════════════
-scene.render.engine               = 'BLENDER_EEVEE'
-scene.render.resolution_x         = 720
-scene.render.resolution_y         = 900
+scene.render.engine = 'CYCLES'
+scene.render.resolution_x = 540
+scene.render.resolution_y = 680
 scene.render.resolution_percentage= 100
 scene.render.fps                  = 30
 scene.render.image_settings.file_format = 'FFMPEG'
 scene.render.ffmpeg.format        = 'MPEG4'
 scene.render.ffmpeg.codec         = 'H264'
 scene.render.ffmpeg.constant_rate_factor = 'HIGH'
-scene.render.filepath = '/home/user/Vipulclaudecode/physics-quest/fennec_3d.mp4'
+scene.render.filepath = '/home/user/Vipulclaudecode/physics-quest/fennec_3d_v2.mp4'
 
 # EEVEE quality
+# Cycles CPU settings
+scene.cycles.samples = 32
+scene.cycles.use_denoising = True
+scene.cycles.device = 'CPU'
+scene.cycles.tile_size = 64
+
 eevee = scene.eevee
 eevee.taa_render_samples  = 64
 eevee.use_bloom           = True
