@@ -8,6 +8,24 @@ I write a short summary at the end of every session:
 
 ---
 
+## 2026-05-31
+**What we did:**
+- Added Andrej Karpathy's CLAUDE.md guidelines to the project
+- Reviewed your Hermes AI Agent project setup
+- Confirmed agent is built and working with Shell scripts
+
+**What Vipul learned:**
+- How to integrate best practices from industry experts (Karpathy's guidelines)
+- What Hermes AI Agent is and how it works
+- Project now has stronger coding standards
+
+**Continue next session:**
+- Define what the Hermes agent does specifically
+- Decide next phase: add UI, deploy, or expand capabilities
+- Document agent functionality
+
+---
+
 ## 2026-05-26
 **What we did:**
 - Set up Claude Code on the web to be as powerful as desktop
