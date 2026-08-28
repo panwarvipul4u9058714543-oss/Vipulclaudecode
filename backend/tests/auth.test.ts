@@ -134,6 +134,7 @@ vi.mock('../src/config/redis', () => ({
 import request from 'supertest';
 import { buildApp } from '../src/app';
 import { verifyFirebaseIdToken } from '../src/lib/auth';
+import { AppError } from '../src/lib/errors';
 
 const asMock = <T>(v: T) => v as unknown as ReturnType<typeof vi.fn>;
 
