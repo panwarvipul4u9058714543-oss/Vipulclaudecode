@@ -181,7 +181,7 @@ describe('POST /api/v1/auth/verify', () => {
 
   it('rejects an invalid token', async () => {
     asMock(verifyFirebaseIdToken).mockRejectedValue(
-      Object.assign(new Error('bad'), { name: 'AppError', statusCode: 401, code: 'UNAUTHORIZED' }),
+      new AppError(401, 'UNAUTHORIZED', 'Invalid token'),
     );
     const res = await request(buildApp())
       .post('/api/v1/auth/verify')
