@@ -27,6 +27,15 @@ enum VehicleType {
   OTHER
 }
 
+enum PickupStatus {
+  OPEN
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
 // ─── Core user table ──────────────────────────────────────────────────
 // One row per registered account. `role` is set once (first-launch) and drives
 // which app UI they see.
