@@ -112,3 +112,4 @@ This helps track exactly what changed and when.
 - `2026-08-28 18:47` → edited `backend/tests/auth.test.ts`
 - `2026-08-28 18:47` → edited `backend/prisma/schema.prisma`
 - `2026-08-28 18:48` → edited `backend/prisma/schema.prisma`
+- `2026-08-28 18:48` → edited `backend/prisma/schema.prisma`

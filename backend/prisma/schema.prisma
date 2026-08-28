@@ -106,6 +106,45 @@ model DealerProfile {
   @@map("dealer_profiles")
 }
 
+// ─── Pickup requests ──────────────────────────────────────────────────
+// The core transactional entity. Household creates one → nearby dealers get
+// pinged → first accepts → completion + review.
+//
+// pickupLat/pickupLng are plain floats. A companion raw-SQL migration adds
+// a generated `pickup_location geography(Point,4326)` column with a GIST
+// index, used by the matching queries in Phase 5.
+
+model PickupRequest {
+  id                String       @id @default(uuid())
+  householdId       String
+  wasteTypes        String[]
+  photoUrls         String[]
+  estimatedWeightKg Float?
+  description       String?
+  pickupAddress     String
+  pickupLat         Float
+  pickupLng         Float
+  status            PickupStatus @default(OPEN)
+  acceptedDealerId  String?
+  acceptedAt        DateTime?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  cancelledAt       DateTime?
+  cancelledReason   String?
+  expiresAt         DateTime
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  household User  @relation("HouseholdPickups", fields: [householdId], references: [id])
+  dealer    User? @relation("DealerPickups", fields: [acceptedDealerId], references: [id])
+
+  @@index([status])
+  @@index([householdId])
+  @@index([acceptedDealerId])
+  @@index([expiresAt])
+  @@map("pickup_requests")
+}
+
 // Kept for /healthz basic query.
 model AppMeta {
   id        Int      @id @default(autoincrement())
