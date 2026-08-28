@@ -73,3 +73,4 @@ This helps track exactly what changed and when.
 - `2026-08-28 18:38` → edited `backend/.gitignore`
 - `2026-08-28 18:38` → edited `backend/.prettierrc`
 - `2026-08-28 18:38` → edited `backend/eslint.config.mjs`
+- `2026-08-28 18:38` → edited `backend/vitest.config.ts`
