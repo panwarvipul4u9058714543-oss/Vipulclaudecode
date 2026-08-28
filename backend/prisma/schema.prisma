@@ -36,6 +36,11 @@ enum PickupStatus {
   EXPIRED
 }
 
+enum PaymentMethod {
+  CASH
+  UPI
+}
+
 // ─── Core user table ──────────────────────────────────────────────────
 // One row per registered account. `role` is set once (first-launch) and drives
 // which app UI they see.
