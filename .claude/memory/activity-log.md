@@ -167,3 +167,4 @@ This helps track exactly what changed and when.
 - `2026-08-28 19:00` → edited `backend/scripts/smoke.sh`
 - `2026-08-28 19:01` → edited `backend/src/middleware/rateLimit.ts`
 - `2026-08-28 19:01` → edited `backend/src/middleware/rateLimit.ts`
+- `2026-08-28 19:02` → edited `backend/README.md`
