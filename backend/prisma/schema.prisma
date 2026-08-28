@@ -55,6 +55,9 @@ model User {
   household HouseholdProfile?
   dealer    DealerProfile?
 
+  householdPickups PickupRequest[] @relation("HouseholdPickups")
+  dealerPickups    PickupRequest[] @relation("DealerPickups")
+
   @@index([role])
   @@map("users")
 }
