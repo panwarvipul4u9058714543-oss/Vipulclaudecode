@@ -99,3 +99,4 @@ This helps track exactly what changed and when.
 - `2026-08-28 18:44` → edited `backend/src/middleware/auth.ts`
 - `2026-08-28 18:44` → edited `backend/src/middleware/requireRole.ts`
 - `2026-08-28 18:44` → edited `backend/src/modules/auth/auth.service.ts`
+- `2026-08-28 18:44` → edited `backend/src/modules/auth/auth.routes.ts`
