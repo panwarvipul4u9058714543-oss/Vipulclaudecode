@@ -143,11 +143,48 @@ model PickupRequest {
   household User  @relation("HouseholdPickups", fields: [householdId], references: [id])
   dealer    User? @relation("DealerPickups", fields: [acceptedDealerId], references: [id])
 
+  transaction PickupTransaction?
+  reviews     Review[]
+
   @@index([status])
   @@index([householdId])
   @@index([acceptedDealerId])
   @@index([expiresAt])
   @@map("pickup_requests")
+}
+
+// ─── Transaction (created at completion) ──────────────────────────────
+
+model PickupTransaction {
+  id                String        @id @default(uuid())
+  pickupRequestId   String        @unique
+  finalWeightKg     Float
+  finalAmountRupees Float
+  paymentMethod     PaymentMethod @default(CASH)
+  dealerNotes       String?
+  createdAt         DateTime      @default(now())
+
+  pickupRequest PickupRequest @relation(fields: [pickupRequestId], references: [id], onDelete: Cascade)
+
+  @@map("pickup_transactions")
+}
+
+// ─── Reviews (bidirectional) ──────────────────────────────────────────
+
+model Review {
+  id              String   @id @default(uuid())
+  pickupRequestId String
+  reviewerId      String
+  revieweeId      String
+  stars           Int
+  comment         String?
+  createdAt       DateTime @default(now())
+
+  pickup PickupRequest @relation(fields: [pickupRequestId], references: [id], onDelete: Cascade)
+
+  @@unique([pickupRequestId, reviewerId])
+  @@index([revieweeId])
+  @@map("reviews")
 }
 
 // Kept for /healthz basic query.
