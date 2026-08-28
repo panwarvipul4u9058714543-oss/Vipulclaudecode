@@ -11,6 +11,7 @@ import { authRouter } from './modules/auth/auth.routes';
 import { usersRouter } from './modules/users/users.routes';
 import { uploadsRouter } from './modules/uploads/uploads.routes';
 import { pickupsRouter } from './modules/pickups/pickups.routes';
+import { dealerRouter } from './modules/dealer/dealer.routes';
 
 /**
  * Builds the Express app. Split from index.ts so tests can import the app
