@@ -61,6 +61,37 @@ pickupsRouter.post('/:id/accept', requireRole('DEALER'), async (req, res) => {
 });
 
 /**
+ * POST /api/v1/pickups/:id/start
+ * DEALER-only. Marks IN_PROGRESS when the dealer has arrived on-site.
+ */
+pickupsRouter.post('/:id/start', requireRole('DEALER'), async (req, res) => {
+  const updated = await startPickup(req.user!.id, req.params.id);
+  res.json({ pickup: updated });
+});
+
+/**
+ * POST /api/v1/pickups/:id/complete
+ * DEALER-only. Enters final weight + amount, creates the transaction row,
+ * bumps counters on both profiles.
+ */
+pickupsRouter.post('/:id/complete', requireRole('DEALER'), async (req, res) => {
+  const body = completePickupSchema.parse(req.body);
+  const updated = await completePickup(req.user!.id, req.params.id, body);
+  res.json({ pickup: updated });
+});
+
+/**
+ * POST /api/v1/pickups/:id/review
+ * Either party leaves a rating (1-5) + optional comment for the other.
+ * Enforced one-per-pickup-per-reviewer via a unique index.
+ */
+pickupsRouter.post('/:id/review', async (req, res) => {
+  const body = reviewSchema.parse(req.body);
+  const review = await leaveReview(req.user!.id, req.params.id, body.stars, body.comment);
+  res.json({ review });
+});
+
+/**
  * GET /api/v1/pickups/mine?status=OPEN&limit=20&cursor=...
  * Household lists their own pickups, most-recent first.
  */
