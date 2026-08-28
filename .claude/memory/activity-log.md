@@ -69,3 +69,4 @@ This helps track exactly what changed and when.
 - `2026-08-28 18:37` → edited `backend/package.json`
 - `2026-08-28 18:37` → edited `backend/tsconfig.json`
 - `2026-08-28 18:38` → edited `backend/tsconfig.build.json`
+- `2026-08-28 18:38` → edited `backend/.env.example`
