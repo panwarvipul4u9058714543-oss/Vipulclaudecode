@@ -3,8 +3,10 @@ import { env } from './config/env';
 import { logger } from './config/logger';
 import { prisma } from './config/prisma';
 import { redis } from './config/redis';
+import { initFirebase } from './config/firebase';
 
 async function main() {
+  initFirebase();
   const app = buildApp();
 
   const server = app.listen(env.PORT, () => {
