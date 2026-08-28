@@ -45,6 +45,7 @@ export function buildApp(): Express {
   app.use('/api/v1/uploads', uploadsRouter);
   app.use('/api/v1/pickups', pickupsRouter);
   app.use('/api/v1/dealer', dealerRouter);
+  app.use('/api/v1/admin', adminRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
