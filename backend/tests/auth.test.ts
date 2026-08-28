@@ -14,11 +14,17 @@ vi.mock('../src/config/prisma', () => ({
   prisma: {
     $queryRaw: vi.fn().mockResolvedValue([{ '?column?': 1 }]),
     user: {
-      findUnique: vi.fn(async ({ where }: any) => {
+      findUnique: vi.fn(async ({ where, include }: any) => {
         for (const u of userDb.values()) {
           if (where.firebaseUid && u.firebaseUid === where.firebaseUid) return u;
           if (where.id && u.id === where.id) {
-            const includeHousehold = arguments;
+            if (include) {
+              return {
+                ...u,
+                household: include.household ? householdDb.get(u.id) ?? null : undefined,
+                dealer: include.dealer ? dealerDb.get(u.id) ?? null : undefined,
+              };
+            }
             return u;
           }
         }
