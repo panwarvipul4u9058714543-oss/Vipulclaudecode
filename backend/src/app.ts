@@ -40,6 +40,8 @@ export function buildApp(): Express {
   // API v1
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1/users', usersRouter);
+  app.use('/api/v1/uploads', uploadsRouter);
+  app.use('/api/v1/pickups', pickupsRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
