@@ -89,3 +89,4 @@ This helps track exactly what changed and when.
 - `2026-08-28 18:40` → edited `backend/tests/setup.ts`
 - `2026-08-28 18:40` → edited `backend/vitest.config.ts`
 - `2026-08-28 18:40` → edited `backend/README.md`
+- `2026-08-28 18:41` → edited `backend/tsconfig.json`
