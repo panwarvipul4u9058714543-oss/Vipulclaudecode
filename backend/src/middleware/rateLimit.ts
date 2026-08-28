@@ -16,7 +16,8 @@ export const globalRateLimit = rateLimit({
   legacyHeaders: false,
   store: new RedisStore({
     // ioredis's `call` signature matches what rate-limit-redis expects.
-    sendCommand: (...args: string[]) => redis.call(...args) as Promise<unknown>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    sendCommand: ((...args: string[]) => (redis as any).call(...args)) as any,
     prefix: 'rl:global:',
   }),
   message: { error: { code: 'RATE_LIMITED', message: 'Too many requests' } },
@@ -32,7 +33,8 @@ export const authRateLimit = rateLimit({
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   store: new RedisStore({
-    sendCommand: (...args: string[]) => redis.call(...args) as Promise<unknown>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    sendCommand: ((...args: string[]) => (redis as any).call(...args)) as any,
     prefix: 'rl:auth:',
   }),
   message: { error: { code: 'RATE_LIMITED', message: 'Too many auth requests' } },
@@ -48,7 +50,8 @@ export const dealerLocationRateLimit = rateLimit({
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   store: new RedisStore({
-    sendCommand: (...args: string[]) => redis.call(...args) as Promise<unknown>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    sendCommand: ((...args: string[]) => (redis as any).call(...args)) as any,
     prefix: 'rl:loc:',
   }),
 });
