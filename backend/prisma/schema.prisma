@@ -1,0 +1,26 @@
+// Prisma schema — the "source of truth" for our database structure.
+// Every change here becomes a real SQL migration via `npx prisma migrate dev`.
+//
+// The `postgresqlExtensions` preview feature lets us declare that our database
+// needs the PostGIS extension (for geographic queries like "find dealers within
+// 3 km of this pickup location").
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis]
+}
+
+// Real models arrive in Phase 2+. This placeholder keeps `prisma generate` happy
+// and gives us a table to hit for the /healthz DB probe.
+model AppMeta {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
