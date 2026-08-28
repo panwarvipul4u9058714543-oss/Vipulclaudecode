@@ -13,6 +13,7 @@ import { uploadsRouter } from './modules/uploads/uploads.routes';
 import { pickupsRouter } from './modules/pickups/pickups.routes';
 import { dealerRouter } from './modules/dealer/dealer.routes';
 import { adminRouter } from './modules/admin/admin.routes';
+import { globalRateLimit } from './middleware/rateLimit';
 
 /**
  * Builds the Express app. Split from index.ts so tests can import the app
