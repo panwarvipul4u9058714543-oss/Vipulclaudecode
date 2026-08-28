@@ -110,6 +110,25 @@ vi.mock('../src/config/prisma', () => ({
         return row;
       }),
     },
+    householdProfile: {
+      update: vi.fn(async ({ where, data }: any) => {
+        const row = householdProfileDb.get(where.userId) ?? {
+          userId: where.userId,
+          totalPickups: 0,
+          ratingSum: 0,
+          ratingCount: 0,
+        };
+        for (const [k, v] of Object.entries(data)) {
+          if (v && typeof v === 'object' && 'increment' in v) {
+            row[k] = (row[k] ?? 0) + (v as any).increment;
+          } else {
+            row[k] = v;
+          }
+        }
+        householdProfileDb.set(where.userId, row);
+        return row;
+      }),
+    },
     pickupRequest: {
       create: vi.fn(async ({ data }: any) => {
         const row = {
