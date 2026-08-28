@@ -17,6 +17,8 @@ import {
 import { broadcastPickup } from './matching';
 import { acceptPickup } from './accept';
 import { listAvailablePickupsForDealer } from './dealerPickups.service';
+import { completePickupSchema, reviewSchema } from './lifecycle.schemas';
+import { completePickup, leaveReview, startPickup } from './lifecycle.service';
 
 export const pickupsRouter = Router();
 pickupsRouter.use(authMiddleware);

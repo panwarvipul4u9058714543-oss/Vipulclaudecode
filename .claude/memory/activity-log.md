@@ -147,3 +147,4 @@ This helps track exactly what changed and when.
 - `2026-08-28 18:56` → edited `backend/prisma/schema.prisma`
 - `2026-08-28 18:56` → edited `backend/src/modules/pickups/lifecycle.schemas.ts`
 - `2026-08-28 18:56` → edited `backend/src/modules/pickups/lifecycle.service.ts`
+- `2026-08-28 18:56` → edited `backend/src/modules/pickups/pickups.routes.ts`
