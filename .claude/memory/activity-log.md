@@ -127,3 +127,4 @@ This helps track exactly what changed and when.
 - `2026-08-28 18:51` → edited `backend/src/lib/dealerGeo.ts`
 - `2026-08-28 18:51` → edited `backend/src/modules/dealer/dealer.schemas.ts`
 - `2026-08-28 18:51` → edited `backend/src/modules/dealer/dealer.service.ts`
+- `2026-08-28 18:51` → edited `backend/src/modules/dealer/dealer.routes.ts`
