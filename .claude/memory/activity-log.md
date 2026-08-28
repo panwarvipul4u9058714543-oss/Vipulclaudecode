@@ -114,3 +114,4 @@ This helps track exactly what changed and when.
 - `2026-08-28 18:48` → edited `backend/prisma/schema.prisma`
 - `2026-08-28 18:48` → edited `backend/prisma/schema.prisma`
 - `2026-08-28 18:48` → edited `backend/src/config/cloudinary.ts`
+- `2026-08-28 18:48` → edited `backend/src/modules/uploads/uploads.routes.ts`
