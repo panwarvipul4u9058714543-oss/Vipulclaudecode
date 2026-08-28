@@ -163,3 +163,4 @@ This helps track exactly what changed and when.
 - `2026-08-28 19:00` → edited `backend/src/app.ts`
 - `2026-08-28 19:00` → edited `backend/Dockerfile`
 - `2026-08-28 19:00` → edited `backend/railway.json`
+- `2026-08-28 19:00` → edited `backend/prisma/sql/postgis-index.sql`
