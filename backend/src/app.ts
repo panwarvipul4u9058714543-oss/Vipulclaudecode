@@ -1,4 +1,5 @@
 import 'express-async-errors';
+import './types/express';
 import express, { type Express } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -7,6 +8,8 @@ import { env } from './config/env';
 import { logger } from './config/logger';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { healthRouter } from './modules/health/health.routes';
+import { authRouter } from './modules/auth/auth.routes';
+import { usersRouter } from './modules/users/users.routes';
 
 /**
  * Builds the Express app. Split from index.ts so tests can import the app
@@ -27,14 +30,16 @@ export function buildApp(): Express {
   app.use(express.urlencoded({ extended: true, limit: '1mb' }));
   app.use(pinoHttp({ logger, autoLogging: { ignore: (req) => req.url === '/healthz' } }));
 
-  // Public routes
   app.use('/healthz', healthRouter);
 
   app.get('/', (_req, res) => {
     res.json({ name: 'waste-management-backend', version: '0.1.0' });
   });
 
-  // 404 + error handling must be last
+  // API v1
+  app.use('/api/v1/auth', authRouter);
+  app.use('/api/v1/users', usersRouter);
+
   app.use(notFoundHandler);
   app.use(errorHandler);
 

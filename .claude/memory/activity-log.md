@@ -103,3 +103,4 @@ This helps track exactly what changed and when.
 - `2026-08-28 18:44` → edited `backend/src/modules/users/users.schemas.ts`
 - `2026-08-28 18:44` → edited `backend/src/modules/users/users.service.ts`
 - `2026-08-28 18:45` → edited `backend/src/modules/users/users.routes.ts`
+- `2026-08-28 18:45` → edited `backend/src/app.ts`
