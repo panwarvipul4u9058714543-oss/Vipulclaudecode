@@ -40,6 +40,11 @@ export function buildApp(): Express {
     res.json({ name: 'waste-management-backend', version: '0.1.0' });
   });
 
+  // Global rate limit for /api/* — skipped in tests to keep them fast.
+  if (env.NODE_ENV !== 'test') {
+    app.use('/api', globalRateLimit);
+  }
+
   // API v1
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1/users', usersRouter);
