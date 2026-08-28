@@ -93,3 +93,4 @@ This helps track exactly what changed and when.
 - `2026-08-28 18:41` → edited `backend/tsconfig.build.json`
 - `2026-08-28 18:41` → edited `backend/tests/setup.ts`
 - `2026-08-28 18:43` → edited `backend/prisma/schema.prisma`
+- `2026-08-28 18:44` → edited `backend/src/config/firebase.ts`
