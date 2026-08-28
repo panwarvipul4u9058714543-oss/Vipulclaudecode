@@ -77,3 +77,4 @@ This helps track exactly what changed and when.
 - `2026-08-28 18:38` → edited `docker-compose.yml`
 - `2026-08-28 18:39` → edited `backend/src/config/env.ts`
 - `2026-08-28 18:39` → edited `backend/src/config/logger.ts`
+- `2026-08-28 18:39` → edited `backend/src/config/prisma.ts`
