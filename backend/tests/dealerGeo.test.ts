@@ -1,14 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Fake Redis client that captures the last command sent.
-const fakeRedis = {
-  geoadd: vi.fn(),
-  zrem: vi.fn(),
-  zcard: vi.fn(),
-  call: vi.fn(),
-  on: vi.fn(),
-  quit: vi.fn(),
-};
+// vi.mock is hoisted to the top of the file, so anything it references must
+// be created via vi.hoisted (which runs before the mock factory).
+const { fakeRedis } = vi.hoisted(() => ({
+  fakeRedis: {
+    geoadd: vi.fn(),
+    zrem: vi.fn(),
+    zcard: vi.fn(),
+    call: vi.fn(),
+    on: vi.fn(),
+    quit: vi.fn(),
+  },
+}));
 
 vi.mock('../src/config/redis', () => ({
   redis: fakeRedis,
