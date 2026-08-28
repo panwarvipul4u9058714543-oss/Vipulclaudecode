@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { PickupStatus } from '@prisma/client';
 import { authMiddleware } from '../../middleware/auth';
 import { requireRole } from '../../middleware/requireRole';
+import { logger } from '../../config/logger';
 import {
   cancelPickupSchema,
   createPickupSchema,
@@ -13,6 +14,9 @@ import {
   getPickupForUser,
   listMyPickups,
 } from './pickups.service';
+import { broadcastPickup } from './matching';
+import { acceptPickup } from './accept';
+import { listAvailablePickupsForDealer } from './dealerPickups.service';
 
 export const pickupsRouter = Router();
 pickupsRouter.use(authMiddleware);
