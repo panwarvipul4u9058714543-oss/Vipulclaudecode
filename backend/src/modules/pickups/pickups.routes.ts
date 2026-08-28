@@ -29,7 +29,33 @@ pickupsRouter.use(authMiddleware);
 pickupsRouter.post('/', requireRole('HOUSEHOLD'), async (req, res) => {
   const body = createPickupSchema.parse(req.body);
   const pickup = await createPickup(req.user!.id, body);
+
+  // Fire the broadcast in the background — household shouldn't wait on it.
+  void broadcastPickup(pickup).catch((err) =>
+    logger.error({ err, pickupId: pickup.id }, 'initial broadcast failed'),
+  );
+
   res.status(201).json({ pickup });
+});
+
+/**
+ * GET /api/v1/pickups/available
+ * DEALER-only. Fallback list if the dealer missed the push notification —
+ * shows OPEN pickups near the dealer's current location. In practice most
+ * dealers act on the push; this is the "did I miss one?" screen.
+ */
+pickupsRouter.get('/available', requireRole('DEALER'), async (req, res) => {
+  const items = await listAvailablePickupsForDealer(req.user!.id);
+  res.json({ items });
+});
+
+/**
+ * POST /api/v1/pickups/:id/accept
+ * DEALER-only. Race-safe accept using a Redis SET NX lock.
+ */
+pickupsRouter.post('/:id/accept', requireRole('DEALER'), async (req, res) => {
+  const updated = await acceptPickup(req.user!.id, req.params.id);
+  res.json({ pickup: updated });
 });
 
 /**
