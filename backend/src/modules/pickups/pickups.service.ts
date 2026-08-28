@@ -82,10 +82,11 @@ export async function getPickupForUser(
           dealer: {
             select: {
               vehicleType: true,
-              rating: false as const,
               currentLat: true,
               currentLng: true,
               lastLocationUpdate: true,
+              ratingSum: true,
+              ratingCount: true,
             },
           },
         },
