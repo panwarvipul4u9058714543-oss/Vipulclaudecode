@@ -344,7 +344,7 @@ describe('End-to-end pickup lifecycle', () => {
     expect(householdProfileDb.get(household.id).ratingCount).toBe(1);
   });
 
-  it('cannot start a pickup that is not ACCEPTED', async () => {
+  it('cannot start a pickup that is not yours (dealer hasn\'t accepted it)', async () => {
     const household = seedHousehold();
     const dealer = seedDealer();
     const app = buildApp();
@@ -357,11 +357,11 @@ describe('End-to-end pickup lifecycle', () => {
     const pickupId: string = created.body.pickup.id;
 
     login(dealer);
-    // Try to start before accepting
+    // Try to start before accepting — ownership check fires first.
     const res = await request(app)
       .post(`/api/v1/pickups/${pickupId}/start`)
       .set('Authorization', bearer);
-    expect(res.status).toBe(409);
+    expect(res.status).toBe(403);
   });
 
   it('cannot complete a pickup that is not IN_PROGRESS', async () => {
