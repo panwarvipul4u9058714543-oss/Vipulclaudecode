@@ -142,3 +142,4 @@ This helps track exactly what changed and when.
 - `2026-08-28 18:54` → edited `backend/src/modules/pickups/pickups.routes.ts`
 - `2026-08-28 18:54` → edited `backend/src/modules/pickups/dealerPickups.service.ts`
 - `2026-08-28 18:54` → edited `backend/src/index.ts`
+- `2026-08-28 18:55` → edited `backend/tests/matching.test.ts`
