@@ -2,11 +2,12 @@
 
 ## What I Am Building Right Now
 <!-- I will update this every session based on what we work on -->
-- **Hermes AI Agent** — A Shell-based AI agent framework from Nous Research
+- **Waste Management App (India)** — Android app connecting households selling scrap (iron, plastic, paper, e-waste) with door-to-door scrap dealers (kabadiwalas). Rapido-style live matching. Backend is complete (Node/TS/Express + PostgreSQL+PostGIS + Redis + Firebase Auth/FCM + Socket.IO + Cloudinary). Android app is next.
 
 ## Past Projects
 <!-- List of things we have built together -->
 - Claude Code full power setup (hooks, commands, MCP servers)
+- **Hermes AI Agent** — Shell-based AI agent framework from Nous Research
 
 ## Goals
 <!-- What Vipul wants to achieve -->

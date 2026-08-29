@@ -1,0 +1,198 @@
+// Prisma schema — the "source of truth" for our database structure.
+// Every change here becomes a real SQL migration via `npx prisma migrate dev`.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis]
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────
+
+enum UserRole {
+  HOUSEHOLD
+  DEALER
+  ADMIN
+}
+
+enum VehicleType {
+  CYCLE_CART
+  AUTO
+  MINI_TRUCK
+  OTHER
+}
+
+enum PickupStatus {
+  OPEN
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+}
+
+// ─── Core user table ──────────────────────────────────────────────────
+// One row per registered account. `role` is set once (first-launch) and drives
+// which app UI they see.
+
+model User {
+  id           String   @id @default(uuid())
+  firebaseUid  String   @unique
+  phone        String   @unique
+  role         UserRole?
+  name         String?
+  profilePhoto String?
+  fcmToken     String?
+  isBlocked    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  household HouseholdProfile?
+  dealer    DealerProfile?
+
+  householdPickups PickupRequest[] @relation("HouseholdPickups")
+  dealerPickups    PickupRequest[] @relation("DealerPickups")
+
+  @@index([role])
+  @@map("users")
+}
+
+// ─── Household profile (1:1 with User where role = HOUSEHOLD) ─────────
+
+model HouseholdProfile {
+  userId         String   @id
+  defaultAddress String?
+  defaultLat     Float?
+  defaultLng     Float?
+  totalPickups   Int      @default(0)
+  ratingSum      Int      @default(0) // sum of stars received; avg = sum / totalPickups
+  ratingCount    Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("household_profiles")
+}
+
+// ─── Dealer profile (1:1 with User where role = DEALER) ───────────────
+// `isOnline` + location fields drive the matching algorithm. Postgres is the
+// source of truth; Redis mirrors online dealers for O(log n) geo lookups.
+
+model DealerProfile {
+  userId              String      @id
+  aadhaarNumberHash   String? // hashed for lookup; raw stored encrypted server-side later
+  vehicleType         VehicleType @default(CYCLE_CART)
+  acceptedWasteTypes  String[] // e.g. ["iron","plastic","paper","e-waste","glass"]
+  isOnline            Boolean     @default(false)
+  isVerified          Boolean     @default(false) // admin approves after Aadhaar review
+  currentLat          Float?
+  currentLng          Float?
+  lastLocationUpdate  DateTime?
+  totalPickups        Int         @default(0)
+  ratingSum           Int         @default(0)
+  ratingCount         Int         @default(0)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([isOnline, isVerified])
+  @@map("dealer_profiles")
+}
+
+// ─── Pickup requests ──────────────────────────────────────────────────
+// The core transactional entity. Household creates one → nearby dealers get
+// pinged → first accepts → completion + review.
+//
+// pickupLat/pickupLng are plain floats. A companion raw-SQL migration adds
+// a generated `pickup_location geography(Point,4326)` column with a GIST
+// index, used by the matching queries in Phase 5.
+
+model PickupRequest {
+  id                String       @id @default(uuid())
+  householdId       String
+  wasteTypes        String[]
+  photoUrls         String[]
+  estimatedWeightKg Float?
+  description       String?
+  pickupAddress     String
+  pickupLat         Float
+  pickupLng         Float
+  status            PickupStatus @default(OPEN)
+  acceptedDealerId  String?
+  acceptedAt        DateTime?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  cancelledAt       DateTime?
+  cancelledReason   String?
+  expiresAt         DateTime
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  household User  @relation("HouseholdPickups", fields: [householdId], references: [id])
+  dealer    User? @relation("DealerPickups", fields: [acceptedDealerId], references: [id])
+
+  transaction PickupTransaction?
+  reviews     Review[]
+
+  @@index([status])
+  @@index([householdId])
+  @@index([acceptedDealerId])
+  @@index([expiresAt])
+  @@map("pickup_requests")
+}
+
+// ─── Transaction (created at completion) ──────────────────────────────
+
+model PickupTransaction {
+  id                String        @id @default(uuid())
+  pickupRequestId   String        @unique
+  finalWeightKg     Float
+  finalAmountRupees Float
+  paymentMethod     PaymentMethod @default(CASH)
+  dealerNotes       String?
+  createdAt         DateTime      @default(now())
+
+  pickupRequest PickupRequest @relation(fields: [pickupRequestId], references: [id], onDelete: Cascade)
+
+  @@map("pickup_transactions")
+}
+
+// ─── Reviews (bidirectional) ──────────────────────────────────────────
+
+model Review {
+  id              String   @id @default(uuid())
+  pickupRequestId String
+  reviewerId      String
+  revieweeId      String
+  stars           Int
+  comment         String?
+  createdAt       DateTime @default(now())
+
+  pickup PickupRequest @relation(fields: [pickupRequestId], references: [id], onDelete: Cascade)
+
+  @@unique([pickupRequestId, reviewerId])
+  @@index([revieweeId])
+  @@map("reviews")
+}
+
+// Kept for /healthz basic query.
+model AppMeta {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("app_meta")
+}
